@@ -17,25 +17,21 @@ typedef struct _url {
 
 static inline void parse_url(const char* url_str, URL *url)
 {
-	UriUriA uri;
-	UriParserStateA state;
+	//UriUriA uri;
+	const char * errorPos;
 
-	state.uri = &uri;
 
-	uriParseUriA(&state, url_str);
-
-	if(state.errorCode != URI_SUCCESS){
+	/**if(uriParseSingleUriA(&uri, url_str, &errorPos) != URI_SUCCESS){
 		ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-							errmsg("invalid input syntax for type uri at or near \"%s\"",
-								state.errorPos)));
+							errmsg("invalid input syntax for type uri at or near \"%s\"", errorPos)));
 	}
 	strcpy(url->scheme, uri.scheme.first);
 	strcpy(url->path, uri.userInfo.first);
 	strcpy(url->query, uri.query.first); 
-	strcpy(url->port, uri.portText.first);
+	strcpy(url->port, uri.portText.first);**/
 	strcpy(url->url, url_str);
-	uriFreeUriMembersA(&uri);
+	//uriFreeUriMembersA(&uri);
 }
 
 Datum url_in(PG_FUNCTION_ARGS);
