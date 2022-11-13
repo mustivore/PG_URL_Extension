@@ -1,7 +1,10 @@
 #include <stdio.h>
 #include "postgres.h"
-#include <uriparser/Uri.h>
+#include "fmgr.h"
 #include <utils/builtins.h>
+#include <string.h>
+#include <ctype.h>
+#include <regex.h>
 
 PG_MODULE_MAGIC;
 
@@ -11,49 +14,49 @@ typedef struct _url {
    char* path;
    char* query;
    char* port;
-   char* url;
-   //char* protocol;
+   char* protocol;
 }  URL;
 
-static inline void parse_url(const char* url_str, URL *url)
+typedef struct varlena url_db;
+
+/*static void parse_url(const char* url_str, URL *url)
 {
-	//UriUriA uri;
-	const char * errorPos;
+	url->host = "";
+}*/
 
-
-	/**if(uriParseSingleUriA(&uri, url_str, &errorPos) != URI_SUCCESS){
-		ereport(ERROR,
-						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-							errmsg("invalid input syntax for type uri at or near \"%s\"", errorPos)));
+static void is_valid_url(const char* url_str){
+	regex_t regex;
+	int value_comp;
+	int value_match;
+	value_comp = regcomp( &regex, "((http|https)://)(www.)?[a-zA-Z0-9@:%._\\+~#?&//=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%._\\+~#?&//=]*)", REG_EXTENDED);
+	if (value_comp != 0) {
+        elog(ERROR, "Error while compiling the regex");
+    }
+	value_match = regexec(&regex, url_str, 0, NULL, 0);
+	if (value_match == REG_NOMATCH){
+		elog(ERROR, "Please provide a valid URL");
 	}
-	strcpy(url->scheme, uri.scheme.first);
-	strcpy(url->path, uri.userInfo.first);
-	strcpy(url->query, uri.query.first); 
-	strcpy(url->port, uri.portText.first);**/
-	strcpy(url->url, url_str);
-	//uriFreeUriMembersA(&uri);
 }
 
 Datum url_in(PG_FUNCTION_ARGS);
 Datum url_out(PG_FUNCTION_ARGS);
 
-typedef struct varlena uritype;
-
 PG_FUNCTION_INFO_V1(url_in);
-Datum 
-url_in(PG_FUNCTION_ARGS) 
+Datum url_in(PG_FUNCTION_ARGS) 
 {
-	char* url_str = PG_GETARG_CSTRING(0);
-
-	URL* url = (URL*) palloc(sizeof(URL));
-	parse_url(url_str, url);
-	PG_RETURN_POINTER(url);
+	char *str_url;
+    url_db *var_url_db;
+	str_url = PG_GETARG_CSTRING(0);
+	is_valid_url(str_url);
+	var_url_db = (url_db *) cstring_to_text(str_url);
+	PG_RETURN_POINTER(var_url_db);
 }
 
 PG_FUNCTION_INFO_V1(url_out);
-Datum 
-url_out(PG_FUNCTION_ARGS) 
-{
-	URL* url = (URL *) PG_GETARG_POINTER(0);
-	PG_RETURN_CSTRING(url->url);
+Datum url_out(PG_FUNCTION_ARGS) 
+{	
+	Datum url_db = PG_GETARG_DATUM(0);
+	PG_RETURN_CSTRING(TextDatumGetCString(url_db));
 }
+
+
