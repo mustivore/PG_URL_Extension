@@ -22,6 +22,32 @@ CREATE TYPE url (
 	CATEGORY       = 'N'
 );
 
-COMMENT ON TYPE url IS 'bigint written in base36: [0-9A-Z]+';
+CREATE OR REPLACE FUNCTION get_protocol(url) RETURNS text
+    IMMUTABLE
+    STRICT
+    LANGUAGE C
+    AS '$libdir/url';
 
+CREATE OR REPLACE FUNCTION get_default_port(url) RETURNS integer
+    IMMUTABLE
+    STRICT
+    LANGUAGE C
+    AS '$libdir/url';
 
+CREATE OR REPLACE FUNCTION get_authority(url) RETURNS text
+    IMMUTABLE
+    STRICT
+    LANGUAGE C
+    AS '$libdir/url';    
+
+CREATE OR REPLACE FUNCTION get_user_info(url) RETURNS text
+    IMMUTABLE
+    STRICT
+    LANGUAGE C
+    AS '$libdir/url'; 
+
+CREATE OR REPLACE FUNCTION get_host(url) RETURNS text
+    IMMUTABLE
+    STRICT
+    LANGUAGE C
+    AS '$libdir/url'; 
