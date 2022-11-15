@@ -13,10 +13,11 @@ typedef struct _url {
    char* host;
    char* path;
    char* query;
-   char* port;
+   int   port;
    char* protocol;
    char* authority;
    char* user_info; 
+   char* file; 
 }  URL;
 
 typedef struct varlena url_db;
@@ -43,6 +44,20 @@ static void retrieve_authority(const char* url_str, URL *url)
 	free(url_to_stroke);
 }
 
+static void retrieve_port_from_authority(const char* url_str, URL *url)
+{
+	char *e;
+	int port; 
+	e = strchr(url_str,':');
+	if (e != NULL) {
+		e = e + 1;
+		port = atoi(e);
+		url->port = port;
+	}else{
+		url->port = -1;
+	}
+}
+
 static void retrieve_userinfo(const char* url_str, URL *url)
 {
 	char *token;
@@ -58,6 +73,7 @@ static void retrieve_userinfo(const char* url_str, URL *url)
 		url->user_info = malloc(sizeof(char)*(strlen(url_str)+1));
 		strcpy(url->user_info, token);
 	}
+	free(url_to_stroke);
 }
 
 static void retrieve_host(const char* url_str, URL *url)
@@ -65,21 +81,65 @@ static void retrieve_host(const char* url_str, URL *url)
 	char *e;
 	char *url_to_stroke = malloc(sizeof(char)*(strlen(url_str)+1));
 	strcpy(url_to_stroke, url_str);
+	url->host = malloc(sizeof(char)*(strlen(url_str)+1));
 	e = strchr(url_to_stroke,'@');
 	if (e != NULL) {
-		url_to_stroke = url_to_stroke + (strlen(url->user_info) + 1);
+		e = e + 1;
+		strcpy(url->host, e);
+	}else{
+		strcpy(url->host, url_to_stroke);
 	}
-	url->host = malloc(sizeof(char)*(strlen(url_str)+1));
-	strcpy(url->host, url_to_stroke);
+	free(url_to_stroke);
+}
+
+static void retrieve_file(const char* url_str, URL *url)
+{
+	char *token;
+	char *url_to_stroke = malloc(sizeof(char)*(strlen(url_str)+1));
+	strcpy(url_to_stroke, url_str);
+	token = strtok(url_to_stroke, "#");
+	url->file = malloc(sizeof(char)*(strlen(url_str)+1));
+	strcpy(url->file, token);
+	free(url_to_stroke);
+}
+
+static void retrieve_path_from_file(const char* url_str, URL *url)
+{
+	char *token;
+	char *url_to_stroke = malloc(sizeof(char)*(strlen(url_str)+1));
+	strcpy(url_to_stroke, url_str);
+	token = strtok(url_to_stroke, "?");
+	url->path = malloc(sizeof(char)*(strlen(url_str)+1));
+	strcpy(url->path, token);
+	free(url_to_stroke);
+}
+
+static void retrieve_query_from_file(const char* url_str, URL *url){
+	char *e;
+	e = strchr(url_str,'?');
+	url->query = malloc(sizeof(char)*(strlen(url_str)+1));
+	if (e != NULL) {
+		e = e + 1;
+		strcpy(url->query, e);
+	} else {
+		strcpy(url->query, "");
+	}
+	
 }
 
 static void parse_url(char* url_str, URL *url)
 {
+	char *url_after_authority_part;
 	retrieve_protocol(url_str,url);
 	url_str = url_str + (strlen(url->protocol) + 3);
 	retrieve_authority(url_str,url);
+	retrieve_port_from_authority(url->authority,url);
 	retrieve_userinfo(url->authority,url);
 	retrieve_host(url->authority,url);
+	url_after_authority_part = strchr(url_str,'/');
+	retrieve_file(url_after_authority_part,url);
+	retrieve_path_from_file(url->file,url);
+	retrieve_query_from_file(url->file,url);
 }
 
 static void is_valid_url(const char* url_str){
@@ -102,6 +162,9 @@ Datum get_protocol(PG_FUNCTION_ARGS);
 Datum get_default_port(PG_FUNCTION_ARGS);
 Datum get_authority(PG_FUNCTION_ARGS);
 Datum get_host(PG_FUNCTION_ARGS);
+Datum get_file(PG_FUNCTION_ARGS);
+Datum get_path(PG_FUNCTION_ARGS);
+Datum get_query(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(url_in);
 Datum url_in(PG_FUNCTION_ARGS) 
@@ -178,4 +241,49 @@ Datum get_host(PG_FUNCTION_ARGS)
 	URL *url = (URL *) malloc(sizeof(URL));
 	parse_url(url_str, url);
 	PG_RETURN_CSTRING(cstring_to_text(url->host));
+}
+
+PG_FUNCTION_INFO_V1(get_file);
+Datum get_file(PG_FUNCTION_ARGS) 
+{
+	Datum url_db = PG_GETARG_DATUM(0);
+	char *url_str = TextDatumGetCString(url_db);
+	URL *url = (URL *) malloc(sizeof(URL));
+	parse_url(url_str, url);
+	PG_RETURN_CSTRING(cstring_to_text(url->file));
+}
+
+PG_FUNCTION_INFO_V1(get_path);
+Datum get_path(PG_FUNCTION_ARGS) 
+{
+	Datum url_db = PG_GETARG_DATUM(0);
+	char *url_str = TextDatumGetCString(url_db);
+	URL *url = (URL *) malloc(sizeof(URL));
+	parse_url(url_str, url);
+	PG_RETURN_CSTRING(cstring_to_text(url->path));
+}
+
+PG_FUNCTION_INFO_V1(get_query);
+Datum get_query(PG_FUNCTION_ARGS) 
+{
+	Datum url_db = PG_GETARG_DATUM(0);
+	char *url_str = TextDatumGetCString(url_db);
+	URL *url = (URL *) malloc(sizeof(URL));
+	parse_url(url_str, url);
+	if(strlen(url->query) == 0){
+		PG_RETURN_NULL();
+	} else {
+		PG_RETURN_CSTRING(cstring_to_text(url->query));
+	}
+	
+}
+
+PG_FUNCTION_INFO_V1(get_port);
+Datum get_port(PG_FUNCTION_ARGS) 
+{
+	Datum url_db = PG_GETARG_DATUM(0);
+	char *url_str = TextDatumGetCString(url_db);
+	URL *url = (URL *) malloc(sizeof(URL));
+	parse_url(url_str, url);
+	PG_RETURN_INT32(url->port);	
 }

@@ -51,3 +51,27 @@ CREATE OR REPLACE FUNCTION get_host(url) RETURNS text
     STRICT
     LANGUAGE C
     AS '$libdir/url'; 
+
+CREATE OR REPLACE FUNCTION get_file(url) RETURNS text
+    IMMUTABLE
+    STRICT
+    LANGUAGE C
+    AS '$libdir/url'; 
+
+CREATE OR REPLACE FUNCTION get_path(url) RETURNS text
+    IMMUTABLE
+    STRICT
+    LANGUAGE C
+    AS '$libdir/url'; 
+
+CREATE OR REPLACE FUNCTION get_query(url) RETURNS text
+    IMMUTABLE
+    STRICT
+    LANGUAGE C
+    AS '$libdir/url'; 
+
+CREATE OR REPLACE FUNCTION get_port(url) RETURNS integer
+    IMMUTABLE
+    STRICT
+    LANGUAGE C
+    AS '$libdir/url'; 
