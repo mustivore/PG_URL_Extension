@@ -75,3 +75,9 @@ CREATE OR REPLACE FUNCTION get_port(url) RETURNS integer
     STRICT
     LANGUAGE C
     AS '$libdir/url'; 
+
+CREATE OR REPLACE FUNCTION get_ref(url) RETURNS text
+    IMMUTABLE
+    STRICT
+    LANGUAGE C
+    AS '$libdir/url'; 

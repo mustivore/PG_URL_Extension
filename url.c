@@ -9,15 +9,16 @@
 PG_MODULE_MAGIC;
 
 typedef struct _url {
-   char* scheme;
-   char* host;
-   char* path;
-   char* query;
+   char *scheme;
+   char *host;
+   char *path;
+   char *query;
+   char *protocol;
+   char *authority;
+   char *user_info; 
+   char *file; 
+   char *ref;
    int   port;
-   char* protocol;
-   char* authority;
-   char* user_info; 
-   char* file; 
 }  URL;
 
 typedef struct varlena url_db;
@@ -39,6 +40,7 @@ static void retrieve_authority(const char* url_str, URL *url)
 	char *url_to_stroke = malloc(sizeof(char)*(strlen(url_str)+1));
 	strcpy(url_to_stroke, url_str);
 	token = strtok(url_to_stroke, "/");
+	token = strtok(url_to_stroke, "?");
 	url->authority = malloc(sizeof(char)*(strlen(url_str)+1));
 	strcpy(url->authority, token);
 	free(url_to_stroke);
@@ -105,12 +107,19 @@ static void retrieve_file(const char* url_str, URL *url)
 
 static void retrieve_path_from_file(const char* url_str, URL *url)
 {
-	char *token;
 	char *url_to_stroke = malloc(sizeof(char)*(strlen(url_str)+1));
 	strcpy(url_to_stroke, url_str);
-	token = strtok(url_to_stroke, "?");
 	url->path = malloc(sizeof(char)*(strlen(url_str)+1));
-	strcpy(url->path, token);
+	elog(WARNING,"Avant %s",url_to_stroke);
+	if (strchr(url_to_stroke,'/') != NULL){
+		char *token = strtok(url_to_stroke, "?");
+		strcpy(url->path, token);
+		elog(WARNING,"Apres %s",token);
+	} else {
+		strcpy(url->path, "");
+	}
+	
+	
 	free(url_to_stroke);
 }
 
@@ -127,17 +136,30 @@ static void retrieve_query_from_file(const char* url_str, URL *url){
 	
 }
 
+
+static void retrieve_ref(const char* url_str, URL *url)
+{
+	char *fragment_part = strchr(url_str,'#');
+	url->ref = malloc(sizeof(char)*(strlen(url_str)+1));
+	if(fragment_part != NULL){
+		fragment_part = fragment_part + 1;
+		strcpy(url->ref, fragment_part);
+	} else {
+		strcpy(url->ref, "");
+	}
+}
+
 static void parse_url(char* url_str, URL *url)
 {
-	char *url_after_authority_part;
 	retrieve_protocol(url_str,url);
 	url_str = url_str + (strlen(url->protocol) + 3);
+	retrieve_ref(url_str,url);
 	retrieve_authority(url_str,url);
 	retrieve_port_from_authority(url->authority,url);
 	retrieve_userinfo(url->authority,url);
 	retrieve_host(url->authority,url);
-	url_after_authority_part = strchr(url_str,'/');
-	retrieve_file(url_after_authority_part,url);
+	url_str = url_str + strlen(url->authority);
+	retrieve_file(url_str,url);
 	retrieve_path_from_file(url->file,url);
 	retrieve_query_from_file(url->file,url);
 }
@@ -165,6 +187,7 @@ Datum get_host(PG_FUNCTION_ARGS);
 Datum get_file(PG_FUNCTION_ARGS);
 Datum get_path(PG_FUNCTION_ARGS);
 Datum get_query(PG_FUNCTION_ARGS);
+Datum get_ref(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(url_in);
 Datum url_in(PG_FUNCTION_ARGS) 
@@ -286,4 +309,18 @@ Datum get_port(PG_FUNCTION_ARGS)
 	URL *url = (URL *) malloc(sizeof(URL));
 	parse_url(url_str, url);
 	PG_RETURN_INT32(url->port);	
+}
+
+PG_FUNCTION_INFO_V1(get_ref);
+Datum get_ref(PG_FUNCTION_ARGS) 
+{
+	Datum url_db = PG_GETARG_DATUM(0);
+	char *url_str = TextDatumGetCString(url_db);
+	URL *url = (URL *) malloc(sizeof(URL));
+	parse_url(url_str, url);
+	if(strlen(url->ref) == 0){
+		PG_RETURN_NULL();
+	} else {
+		PG_RETURN_CSTRING(cstring_to_text(url->ref));	
+	}
 }
