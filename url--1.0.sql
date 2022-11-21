@@ -8,7 +8,16 @@ RETURNS url
 AS '$libdir/url'
 LANGUAGE C IMMUTABLE STRICT;
 
---base36_out(base36)
+-- CREATE OR REPLACE FUNCTION url_in(cstring, cstring, integer, cstring)
+-- RETURNS url
+-- AS '$libdir/url'
+-- LANGUAGE C IMMUTABLE STRICT;
+
+-- CREATE OR REPLACE FUNCTION create_url(cstring, cstring, cstring)
+-- RETURNS url
+-- AS '$libdir/url'
+-- LANGUAGE C IMMUTABLE STRICT;
+
 CREATE OR REPLACE FUNCTION url_out(url)
 RETURNS cstring
 AS '$libdir/url'
@@ -81,3 +90,117 @@ CREATE OR REPLACE FUNCTION get_ref(url) RETURNS text
     STRICT
     LANGUAGE C
     AS '$libdir/url'; 
+
+CREATE FUNCTION url_cmp(url, url) RETURNS integer
+    IMMUTABLE
+    STRICT
+    LANGUAGE C
+    AS '$libdir/url';
+
+CREATE FUNCTION url_lt(url, url) RETURNS boolean
+    IMMUTABLE
+    STRICT
+    LANGUAGE C
+    AS '$libdir/url';
+
+CREATE FUNCTION url_le(url, url) RETURNS boolean
+    IMMUTABLE
+    STRICT
+    LANGUAGE C
+    AS '$libdir/url';
+
+CREATE FUNCTION url_eq(url, url) RETURNS boolean
+    IMMUTABLE
+    STRICT
+    LANGUAGE C
+    AS '$libdir/url';
+
+CREATE FUNCTION url_ne(url, url) RETURNS boolean
+    IMMUTABLE
+    STRICT
+    LANGUAGE C
+    AS '$libdir/url';
+
+CREATE FUNCTION url_ge(url, url) RETURNS boolean
+    IMMUTABLE
+    STRICT
+    LANGUAGE C
+    AS '$libdir/url';
+
+CREATE FUNCTION url_gt(url, url) RETURNS boolean
+    IMMUTABLE
+    STRICT
+    LANGUAGE C
+    AS '$libdir/url';
+
+CREATE OPERATOR < (
+    LEFTARG = url,
+    RIGHTARG = url,
+    COMMUTATOR = >,
+    NEGATOR = >=,
+    RESTRICT = scalarltsel,
+    JOIN = scalarltjoinsel,
+    PROCEDURE = url_lt
+);
+
+CREATE OPERATOR <= (
+    LEFTARG = url,
+    RIGHTARG = url,
+    COMMUTATOR = >=,
+    NEGATOR = >,
+    RESTRICT = scalarltsel,
+    JOIN = scalarltjoinsel,
+    PROCEDURE = url_le
+);
+
+CREATE OPERATOR = (
+    LEFTARG = url,
+    RIGHTARG = url,
+    COMMUTATOR = =,
+    NEGATOR = <>,
+    RESTRICT = eqsel,
+    JOIN = eqjoinsel,
+    HASHES,
+    MERGES,
+    PROCEDURE = url_eq
+);
+
+CREATE OPERATOR <> (
+    LEFTARG = url,
+    RIGHTARG = url,
+    COMMUTATOR = <>,
+    NEGATOR = =,
+    RESTRICT = neqsel,
+    JOIN = neqjoinsel,
+    PROCEDURE = url_ne
+);
+
+CREATE OPERATOR >= (
+    LEFTARG = url,
+    RIGHTARG = url,
+    COMMUTATOR = <=,
+    NEGATOR = <,
+    RESTRICT = scalargtsel,
+    JOIN = scalargtjoinsel,
+    PROCEDURE = url_ge
+);
+
+CREATE OPERATOR > (
+    LEFTARG = url,
+    RIGHTARG = url,
+    COMMUTATOR = <,
+    NEGATOR = <=,
+    RESTRICT = scalargtsel,
+    JOIN = scalargtjoinsel,
+    PROCEDURE = url_gt
+);
+
+CREATE OPERATOR CLASS btree_url_ops 
+DEFAULT FOR TYPE url USING btree 
+AS
+    OPERATOR        1       < ,
+    OPERATOR        2       <= ,
+    OPERATOR        3       = ,
+    OPERATOR        4       >= ,
+    OPERATOR        5       > ,
+    FUNCTION        1       url_cmp(url, url);

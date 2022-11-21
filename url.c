@@ -6,6 +6,8 @@
 #include <ctype.h>
 #include <regex.h>
 
+#define REGEX_URL "((http|https)://)(www.)?[a-zA-Z0-9@:%._\\+~#?&//=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%._\\+~#?&//=]*)"
+
 PG_MODULE_MAGIC;
 
 typedef struct _url {
@@ -110,11 +112,9 @@ static void retrieve_path_from_file(const char* url_str, URL *url)
 	char *url_to_stroke = malloc(sizeof(char)*(strlen(url_str)+1));
 	strcpy(url_to_stroke, url_str);
 	url->path = malloc(sizeof(char)*(strlen(url_str)+1));
-	elog(WARNING,"Avant %s",url_to_stroke);
 	if (strchr(url_to_stroke,'/') != NULL){
 		char *token = strtok(url_to_stroke, "?");
 		strcpy(url->path, token);
-		elog(WARNING,"Apres %s",token);
 	} else {
 		strcpy(url->path, "");
 	}
@@ -168,7 +168,7 @@ static void is_valid_url(const char* url_str){
 	regex_t regex;
 	int value_comp;
 	int value_match;
-	value_comp = regcomp( &regex, "((http|https)://)(www.)?[a-zA-Z0-9@:%._\\+~#?&//=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%._\\+~#?&//=]*)", REG_EXTENDED);
+	value_comp = regcomp(&regex, REGEX_URL, REG_EXTENDED);
 	if (value_comp != 0) {
         elog(ERROR, "Error while compiling the regex");
     }
@@ -178,7 +178,27 @@ static void is_valid_url(const char* url_str){
 	}
 }
 
+static int _url_cmp(char *url1_str, char *url2_str){
+	URL *url1 = (URL *) malloc(sizeof(URL));
+	URL *url2 = (URL *) malloc(sizeof(URL));
+	int diff;
+	parse_url(url1_str,url1);
+	parse_url(url1_str,url2);
+	diff = strcmp(url1->file, url2->file);
+	if(diff == 0){
+		free(url1);
+		free(url2);
+		return strcmp(url1->file, url2->file);
+	} else {
+		free(url1);
+		free(url2);
+		return diff;
+	}
+	
+}
+
 Datum url_in(PG_FUNCTION_ARGS);
+// Datum create_url(PG_FUNCTION_ARGS) ;
 Datum url_out(PG_FUNCTION_ARGS);
 Datum get_protocol(PG_FUNCTION_ARGS);
 Datum get_default_port(PG_FUNCTION_ARGS);
@@ -199,6 +219,22 @@ Datum url_in(PG_FUNCTION_ARGS)
 	var_url_db = (url_db *) cstring_to_text(str_url);
 	PG_RETURN_POINTER(var_url_db);
 }
+
+// PG_FUNCTION_INFO_V1(create_url);
+// Datum create_url(PG_FUNCTION_ARGS) 
+// {
+// 	char *protocol;
+// 	char *host;
+// 	char *file;
+//     url_db *var_url_db;
+// 	protocol = PG_GETARG_CSTRING(0);
+// 	host = PG_GETARG_CSTRING(1);
+// 	file = PG_GETARG_CSTRING(2);
+// 	//is_valid_url(str_url);
+// 	elog(WARNING,"%s %s %s",protocol,host,file);
+// 	var_url_db = (url_db *) cstring_to_text(protocol);
+// 	PG_RETURN_POINTER(var_url_db);
+// }
 
 PG_FUNCTION_INFO_V1(url_out);
 Datum url_out(PG_FUNCTION_ARGS) 
@@ -323,4 +359,73 @@ Datum get_ref(PG_FUNCTION_ARGS)
 	} else {
 		PG_RETURN_CSTRING(cstring_to_text(url->ref));	
 	}
+}
+
+PG_FUNCTION_INFO_V1(url_lt);
+Datum
+url_lt(PG_FUNCTION_ARGS)
+{
+	char *url1_str = TextDatumGetCString(PG_GETARG_DATUM(0));
+	char *url2_str = TextDatumGetCString(PG_GETARG_DATUM(1));
+	PG_RETURN_BOOL(_url_cmp(url1_str, url2_str) < 0);
+}
+
+PG_FUNCTION_INFO_V1(url_le);
+Datum
+url_le(PG_FUNCTION_ARGS)
+{
+	char *url1_str = TextDatumGetCString(PG_GETARG_DATUM(0));
+	char *url2_str = TextDatumGetCString(PG_GETARG_DATUM(1));
+
+	PG_RETURN_BOOL(_url_cmp(url1_str, url2_str) <= 0);
+}
+
+PG_FUNCTION_INFO_V1(url_eq);
+Datum
+url_eq(PG_FUNCTION_ARGS)
+{
+	char *url1_str = TextDatumGetCString(PG_GETARG_DATUM(0));
+	char *url2_str = TextDatumGetCString(PG_GETARG_DATUM(1));
+
+	PG_RETURN_BOOL(_url_cmp(url1_str, url2_str) == 0);
+}
+
+PG_FUNCTION_INFO_V1(url_ne);
+Datum
+url_ne(PG_FUNCTION_ARGS)
+{
+	char *url1_str = TextDatumGetCString(PG_GETARG_DATUM(0));
+	char *url2_str = TextDatumGetCString(PG_GETARG_DATUM(1));
+
+	PG_RETURN_BOOL(_url_cmp(url1_str, url2_str) != 0);
+}
+
+PG_FUNCTION_INFO_V1(url_ge);
+Datum
+url_ge(PG_FUNCTION_ARGS)
+{
+	char *url1_str = TextDatumGetCString(PG_GETARG_DATUM(0));
+	char *url2_str = TextDatumGetCString(PG_GETARG_DATUM(1));
+
+	PG_RETURN_BOOL(_url_cmp(url1_str, url2_str) >= 0);
+}
+
+PG_FUNCTION_INFO_V1(url_gt);
+Datum
+url_gt(PG_FUNCTION_ARGS)
+{
+	char *url1_str = TextDatumGetCString(PG_GETARG_DATUM(0));
+	char *url2_str = TextDatumGetCString(PG_GETARG_DATUM(1));
+
+	PG_RETURN_BOOL(_url_cmp(url1_str, url2_str) > 0);
+}
+
+PG_FUNCTION_INFO_V1(url_cmp);
+Datum
+url_cmp(PG_FUNCTION_ARGS)
+{
+	char *url1_str = TextDatumGetCString(PG_GETARG_DATUM(0));
+	char *url2_str = TextDatumGetCString(PG_GETARG_DATUM(1));
+
+	PG_RETURN_INT32(_url_cmp(url1_str, url2_str));
 }
