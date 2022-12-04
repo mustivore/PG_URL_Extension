@@ -3,7 +3,6 @@
 #include "fmgr.h"
 #include <utils/builtins.h>
 #include <string.h>
-#include <ctype.h>
 #include <regex.h>
 
 #define REGEX_URL "((http|https)://)(www.)?[a-zA-Z0-9@:%._\\+~#?&//=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%._\\+~#?&//=]*)"
@@ -103,7 +102,11 @@ static void retrieve_file(const char* url_str, URL *url)
 	strcpy(url_to_stroke, url_str);
 	token = strtok(url_to_stroke, "#");
 	url->file = malloc(sizeof(char)*(strlen(url_str)+1));
-	strcpy(url->file, token);
+	if(token != NULL){
+		strcpy(url->file, token);
+	}else{
+		strcpy(url->file, "");
+	}
 	free(url_to_stroke);
 }
 
@@ -123,7 +126,8 @@ static void retrieve_path_from_file(const char* url_str, URL *url)
 	free(url_to_stroke);
 }
 
-static void retrieve_query_from_file(const char* url_str, URL *url){
+static void retrieve_query_from_file(const char* url_str, URL *url)
+{
 	char *e;
 	e = strchr(url_str,'?');
 	url->query = malloc(sizeof(char)*(strlen(url_str)+1));
@@ -147,6 +151,7 @@ static void retrieve_ref(const char* url_str, URL *url)
 	} else {
 		strcpy(url->ref, "");
 	}
+
 }
 
 static void parse_url(char* url_str, URL *url)
@@ -198,7 +203,7 @@ static int _url_cmp(char *url1_str, char *url2_str){
 }
 
 Datum url_in(PG_FUNCTION_ARGS);
-// Datum create_url(PG_FUNCTION_ARGS) ;
+// Datum create_url(PG_FUNCTION_ARGS);
 Datum url_out(PG_FUNCTION_ARGS);
 Datum get_protocol(PG_FUNCTION_ARGS);
 Datum get_default_port(PG_FUNCTION_ARGS);
@@ -226,7 +231,7 @@ Datum url_in(PG_FUNCTION_ARGS)
 // 	char *protocol;
 // 	char *host;
 // 	char *file;
-//     url_db *var_url_db;
+// 	url_db *var_url_db;
 // 	protocol = PG_GETARG_CSTRING(0);
 // 	host = PG_GETARG_CSTRING(1);
 // 	file = PG_GETARG_CSTRING(2);
