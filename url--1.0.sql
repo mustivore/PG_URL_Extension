@@ -204,3 +204,30 @@ AS
     OPERATOR        4       >= ,
     OPERATOR        5       > ,
     FUNCTION        1       url_cmp(url, url);
+
+CREATE FUNCTION equals(url, url)
+  RETURNS boolean
+  AS 'SELECT $1 OPERATOR(=) $2'
+  LANGUAGE SQL IMMUTABLE STRICT;
+
+CREATE FUNCTION url_same_file(url, url) RETURNS boolean
+    IMMUTABLE
+    STRICT
+    LANGUAGE C
+    AS '$libdir/url';
+
+CREATE FUNCTION sameFile(url, url)
+  RETURNS boolean
+  AS 'SELECT $1 OPERATOR(=) $2 OR url_same_file($1,$2)'
+  LANGUAGE SQL IMMUTABLE STRICT;
+
+CREATE FUNCTION url_same_host(url, url) RETURNS boolean
+    IMMUTABLE
+    STRICT
+    LANGUAGE C
+    AS '$libdir/url';
+
+CREATE FUNCTION sameHost(url, url)
+  RETURNS boolean
+  AS 'SELECT $1 OPERATOR(=) $2 OR url_same_host($1,$2)'
+  LANGUAGE SQL IMMUTABLE STRICT;

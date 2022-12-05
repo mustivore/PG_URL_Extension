@@ -183,23 +183,17 @@ static void is_valid_url(const char* url_str){
 	}
 }
 
-static int _url_cmp(char *url1_str, char *url2_str){
-	URL *url1 = (URL *) malloc(sizeof(URL));
-	URL *url2 = (URL *) malloc(sizeof(URL));
+static int _url_cmp(URL *url1, URL *url2){
 	int diff;
-	parse_url(url1_str,url1);
-	parse_url(url1_str,url2);
-	diff = strcmp(url1->file, url2->file);
+	diff = strcmp(url1->protocol, url2->protocol);
 	if(diff == 0){
-		free(url1);
-		free(url2);
-		return strcmp(url1->file, url2->file);
-	} else {
-		free(url1);
-		free(url2);
+		diff = strcmp(url1->authority, url2->authority);
+		if (diff == 0){
+			return strcmp(url1->file, url2->file);
+		} 
 		return diff;
 	}
-	
+	return diff;
 }
 
 Datum url_in(PG_FUNCTION_ARGS);
@@ -213,6 +207,9 @@ Datum get_file(PG_FUNCTION_ARGS);
 Datum get_path(PG_FUNCTION_ARGS);
 Datum get_query(PG_FUNCTION_ARGS);
 Datum get_ref(PG_FUNCTION_ARGS);
+Datum equals(PG_FUNCTION_ARGS);
+Datum url_same_host(PG_FUNCTION_ARGS);
+Datum url_same_file(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(url_in);
 Datum url_in(PG_FUNCTION_ARGS) 
@@ -366,13 +363,41 @@ Datum get_ref(PG_FUNCTION_ARGS)
 	}
 }
 
+PG_FUNCTION_INFO_V1(url_same_file);
+Datum url_same_file(PG_FUNCTION_ARGS) 
+{
+	char *url1_str = TextDatumGetCString(PG_GETARG_DATUM(0));
+	char *url2_str = TextDatumGetCString(PG_GETARG_DATUM(1));
+	URL *url1 = (URL *) malloc(sizeof(URL));
+	URL *url2 = (URL *) malloc(sizeof(URL));
+	parse_url(url1_str,url1);
+	parse_url(url2_str,url2);
+	PG_RETURN_BOOL(strcmp(url1->file, url2->file) == 0);
+}
+
+PG_FUNCTION_INFO_V1(url_same_host);
+Datum url_same_host(PG_FUNCTION_ARGS) 
+{
+	char *url1_str = TextDatumGetCString(PG_GETARG_DATUM(0));
+	char *url2_str = TextDatumGetCString(PG_GETARG_DATUM(1));
+	URL *url1 = (URL *) malloc(sizeof(URL));
+	URL *url2 = (URL *) malloc(sizeof(URL));
+	parse_url(url1_str,url1);
+	parse_url(url2_str,url2);
+	PG_RETURN_BOOL(strcmp(url1->host, url2->host) == 0);
+}
+
 PG_FUNCTION_INFO_V1(url_lt);
 Datum
 url_lt(PG_FUNCTION_ARGS)
 {
 	char *url1_str = TextDatumGetCString(PG_GETARG_DATUM(0));
 	char *url2_str = TextDatumGetCString(PG_GETARG_DATUM(1));
-	PG_RETURN_BOOL(_url_cmp(url1_str, url2_str) < 0);
+	URL *url1 = (URL *) malloc(sizeof(URL));
+	URL *url2 = (URL *) malloc(sizeof(URL));
+	parse_url(url1_str,url1);
+	parse_url(url2_str,url2);
+	PG_RETURN_BOOL(_url_cmp(url1, url2) < 0);
 }
 
 PG_FUNCTION_INFO_V1(url_le);
@@ -381,8 +406,11 @@ url_le(PG_FUNCTION_ARGS)
 {
 	char *url1_str = TextDatumGetCString(PG_GETARG_DATUM(0));
 	char *url2_str = TextDatumGetCString(PG_GETARG_DATUM(1));
-
-	PG_RETURN_BOOL(_url_cmp(url1_str, url2_str) <= 0);
+	URL *url1 = (URL *) malloc(sizeof(URL));
+	URL *url2 = (URL *) malloc(sizeof(URL));
+	parse_url(url1_str,url1);
+	parse_url(url2_str,url2);
+	PG_RETURN_BOOL(_url_cmp(url1, url2) <= 0);
 }
 
 PG_FUNCTION_INFO_V1(url_eq);
@@ -391,8 +419,11 @@ url_eq(PG_FUNCTION_ARGS)
 {
 	char *url1_str = TextDatumGetCString(PG_GETARG_DATUM(0));
 	char *url2_str = TextDatumGetCString(PG_GETARG_DATUM(1));
-
-	PG_RETURN_BOOL(_url_cmp(url1_str, url2_str) == 0);
+	URL *url1 = (URL *) malloc(sizeof(URL));
+	URL *url2 = (URL *) malloc(sizeof(URL));
+	parse_url(url1_str,url1);
+	parse_url(url2_str,url2);
+	PG_RETURN_BOOL(_url_cmp(url1, url2) == 0);
 }
 
 PG_FUNCTION_INFO_V1(url_ne);
@@ -401,8 +432,11 @@ url_ne(PG_FUNCTION_ARGS)
 {
 	char *url1_str = TextDatumGetCString(PG_GETARG_DATUM(0));
 	char *url2_str = TextDatumGetCString(PG_GETARG_DATUM(1));
-
-	PG_RETURN_BOOL(_url_cmp(url1_str, url2_str) != 0);
+	URL *url1 = (URL *) malloc(sizeof(URL));
+	URL *url2 = (URL *) malloc(sizeof(URL));
+	parse_url(url1_str,url1);
+	parse_url(url2_str,url2);
+	PG_RETURN_BOOL(_url_cmp(url1, url2) != 0);
 }
 
 PG_FUNCTION_INFO_V1(url_ge);
@@ -411,8 +445,11 @@ url_ge(PG_FUNCTION_ARGS)
 {
 	char *url1_str = TextDatumGetCString(PG_GETARG_DATUM(0));
 	char *url2_str = TextDatumGetCString(PG_GETARG_DATUM(1));
-
-	PG_RETURN_BOOL(_url_cmp(url1_str, url2_str) >= 0);
+	URL *url1 = (URL *) malloc(sizeof(URL));
+	URL *url2 = (URL *) malloc(sizeof(URL));
+	parse_url(url1_str,url1);
+	parse_url(url2_str,url2);
+	PG_RETURN_BOOL(_url_cmp(url1, url2) >= 0);
 }
 
 PG_FUNCTION_INFO_V1(url_gt);
@@ -421,8 +458,11 @@ url_gt(PG_FUNCTION_ARGS)
 {
 	char *url1_str = TextDatumGetCString(PG_GETARG_DATUM(0));
 	char *url2_str = TextDatumGetCString(PG_GETARG_DATUM(1));
-
-	PG_RETURN_BOOL(_url_cmp(url1_str, url2_str) > 0);
+	URL *url1 = (URL *) malloc(sizeof(URL));
+	URL *url2 = (URL *) malloc(sizeof(URL));
+	parse_url(url1_str,url1);
+	parse_url(url2_str,url2);
+	PG_RETURN_BOOL(_url_cmp(url1, url2) > 0);
 }
 
 PG_FUNCTION_INFO_V1(url_cmp);
@@ -431,6 +471,9 @@ url_cmp(PG_FUNCTION_ARGS)
 {
 	char *url1_str = TextDatumGetCString(PG_GETARG_DATUM(0));
 	char *url2_str = TextDatumGetCString(PG_GETARG_DATUM(1));
-
-	PG_RETURN_INT32(_url_cmp(url1_str, url2_str));
+	URL *url1 = (URL *) malloc(sizeof(URL));
+	URL *url2 = (URL *) malloc(sizeof(URL));
+	parse_url(url1_str,url1);
+	parse_url(url2_str,url2);
+	PG_RETURN_INT32(_url_cmp(url1, url2));
 }
