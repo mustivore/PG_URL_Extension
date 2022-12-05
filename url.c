@@ -85,12 +85,10 @@ static void retrieve_host(const char* url_str, URL *url)
 	char *url_to_stroke = malloc(sizeof(char)*(strlen(url_str)+1));
 	strcpy(url_to_stroke, url_str);
 	url->host = malloc(sizeof(char)*(strlen(url_str)+1));
-	printf("%s\n", url_to_stroke);
 	e = strchr(url_to_stroke,'@');
 	if (e != NULL) {
 		e = e + 1;
 		strcpy(url->host, e);
-		printf("-->", url->host);
 	}else{
 		strcpy(url->host, url_to_stroke);
 	}
@@ -262,7 +260,7 @@ Datum get_protocol(PG_FUNCTION_ARGS)
 	PG_RETURN_CSTRING(cstring_to_text(url->protocol));
 }
 
-static int _get_default_port(char* url_str) 
+static int get_default_port_from_str(char* url_str) 
 {
 	URL *url = (URL *) malloc(sizeof(URL));
 	parse_url(url_str, url);
@@ -279,7 +277,7 @@ Datum get_default_port(PG_FUNCTION_ARGS)
 {
 	Datum url_db = PG_GETARG_DATUM(0);
 	char *url_str = TextDatumGetCString(url_db);
-		PG_RETURN_INT32(_get_default_port(url_str));
+		PG_RETURN_INT32(get_default_port_from_str(url_str));
 }
 
 PG_FUNCTION_INFO_V1(get_authority);
@@ -397,7 +395,7 @@ Datum equals(PG_FUNCTION_ARGS)
 	if (strcmp(url1->file, url2->file)) return false;
 	if (strcmp(url1->ref, url2->ref)) return false;
 	if (url1->port == -1 || url2->port == -1) {
-		if (_get_default_port(url1_str) != _get_default_port(url2_str)) return false; 
+		if (get_default_port_from_str(url1_str) != get_default_port_from_str(url2_str)) return false; 
 	} else {
 		if (url1->port != url2->port) return false; 
 	}

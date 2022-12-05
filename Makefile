@@ -1,6 +1,6 @@
 EXTENSION   = url
 MODULES     = url
-DATA        = url--1.0.sql url.control # script files to install
+DATA        = url--1.0.sql url.control
 
 LDFLAGS=-lrt
 
