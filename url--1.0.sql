@@ -31,6 +31,24 @@ CREATE TYPE url (
 	CATEGORY       = 'N'
 );
 
+CREATE OR REPLACE FUNCTION make_url(cstring) RETURNS url
+    IMMUTABLE
+    STRICT
+    LANGUAGE C
+    AS '$libdir/url';
+
+CREATE OR REPLACE FUNCTION make_url_prot_host_port_file(cstring,cstring ,integer, cstring) RETURNS url
+    IMMUTABLE
+    STRICT
+    LANGUAGE C
+    AS '$libdir/url';
+    
+CREATE OR REPLACE FUNCTION make_url_prot_host_file(cstring,cstring, cstring) RETURNS url
+        IMMUTABLE
+        STRICT
+        LANGUAGE C
+        AS '$libdir/url';
+
 CREATE OR REPLACE FUNCTION get_protocol(url) RETURNS text
     IMMUTABLE
     STRICT

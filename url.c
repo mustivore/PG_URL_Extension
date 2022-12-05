@@ -6,6 +6,8 @@
 #include <regex.h>
 
 #define REGEX_URL "((http|https)://)(www.)?[a-zA-Z0-9@:%._\\+~#?&//=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%._\\+~#?&//=]*)"
+#define REGEX_HOST "(^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9])$)"
+#define REGEX_FILENAME "(^([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9/-]*[A-Za-z0-9])$)"
 
 PG_MODULE_MAGIC;
 
@@ -183,6 +185,45 @@ static void is_valid_url(const char* url_str){
 	}
 }
 
+
+static void is_valid_port(const int port){
+  if ( 0 > port || port > 65353){
+    elog(ERROR, "Please provide a valid port");
+  }
+}
+static void is_valid_host(const char* host){
+  regex_t regex;
+  int value_comp;
+  int value_match;
+  value_comp = regcomp(&regex, REGEX_HOST, REG_EXTENDED);
+  if (value_comp != 0) {
+        elog(ERROR, "Error while compiling the regex");
+    }
+  value_match = regexec(&regex, host, 0, NULL, 0);
+  if (value_match == REG_NOMATCH){
+    elog(ERROR, "Please provide a valid host");
+  }
+}
+static void is_valid_file (const char* filename){
+  regex_t regex;
+  int value_comp;
+  int value_match;
+  value_comp = regcomp(&regex, REGEX_FILENAME, REG_EXTENDED);
+  if (value_comp != 0) {
+        elog(ERROR, "Error while compiling the regex");
+    }
+  value_match = regexec(&regex, filename, 0, NULL, 0);
+  if (value_match == REG_NOMATCH){
+    elog(ERROR, "Please provide a valid file");
+  }
+}
+static void is_valid_protocol (const char* protocol){
+  if (!(strcmp(protocol, "http") == 0 || strcmp(protocol, "https") == 0)){
+    elog(ERROR, "Please provide a valid protocol");
+ 	} 
+}
+
+
 static int _url_cmp(char *url1_str, char *url2_str){
 	URL *url1 = (URL *) malloc(sizeof(URL));
 	URL *url2 = (URL *) malloc(sizeof(URL));
@@ -203,7 +244,10 @@ static int _url_cmp(char *url1_str, char *url2_str){
 }
 
 Datum url_in(PG_FUNCTION_ARGS);
-// Datum create_url(PG_FUNCTION_ARGS);
+Datum make_url(PG_FUNCTION_ARGS);
+Datum make_url_cont_spec(PG_FUNCTION_ARGS);
+Datum make_url_prot_host_file(PG_FUNCTION_ARGS);
+Datum make_url_prot_host_port_file(PG_FUNCTION_ARGS);
 Datum url_out(PG_FUNCTION_ARGS);
 Datum get_protocol(PG_FUNCTION_ARGS);
 Datum get_default_port(PG_FUNCTION_ARGS);
@@ -252,6 +296,71 @@ Datum url_out(PG_FUNCTION_ARGS)
 	char *url_str = TextDatumGetCString(url_db);
 	PG_RETURN_CSTRING(url_str);
 }
+
+	PG_FUNCTION_INFO_V1(make_url);
+Datum make_url(PG_FUNCTION_ARGS)
+{
+	char *str_url;
+    url_db *var_url_db;
+	str_url = PG_GETARG_CSTRING(0);
+	is_valid_url(str_url);
+	var_url_db = (url_db *) cstring_to_text(str_url);
+	PG_RETURN_POINTER(var_url_db);
+}
+PG_FUNCTION_INFO_V1(make_url_prot_host_port_file);
+Datum make_url_prot_host_port_file(PG_FUNCTION_ARGS)
+{
+	char *str_prot;
+  int port_url;
+  char port_char[20];
+  char* str_host;
+  char*str_file;
+  url_db *var_url_db;
+  char final_url[512]="";
+	str_prot = PG_GETARG_CSTRING(0);
+  is_valid_protocol(str_prot);
+  //is_valid_url(str_url);
+  str_host =  PG_GETARG_CSTRING(1);
+  is_valid_host(str_host);
+  port_url = PG_GETARG_INT32(2);
+  is_valid_port(port_url);
+  sprintf(port_char, "%d", port_url);
+  str_file = PG_GETARG_CSTRING(3);
+  is_valid_file(str_file);
+  strcat(final_url,str_prot);
+  strcat(final_url, "://");
+  strcat(final_url, str_host);
+  strcat(final_url, ":");
+  strcat(final_url, port_char);
+  strcat(final_url, "/");
+  strcat(final_url, str_file);
+	var_url_db = (url_db *) cstring_to_text(final_url);
+	PG_RETURN_POINTER(var_url_db);
+}
+PG_FUNCTION_INFO_V1(make_url_prot_host_file);
+Datum make_url_prot_host_file(PG_FUNCTION_ARGS)
+{
+	char *str_prot;
+  char* str_host;
+  char*str_file;
+  url_db *var_url_db;
+  char final_url[512]="";
+	str_prot = PG_GETARG_CSTRING(0);
+  is_valid_protocol(str_prot);
+  str_host =  PG_GETARG_CSTRING(1);
+  is_valid_host(str_host);
+  str_file = PG_GETARG_CSTRING(2);
+  is_valid_file(str_file);
+  strcat(final_url,str_prot);
+  strcat(final_url, "://");
+  strcat(final_url, str_host);
+  strcat(final_url, "/");
+  strcat(final_url, str_file);
+	var_url_db = (url_db *) cstring_to_text(final_url);
+	PG_RETURN_POINTER(var_url_db);
+}
+
+
 
 PG_FUNCTION_INFO_V1(get_protocol);
 Datum get_protocol(PG_FUNCTION_ARGS) 
