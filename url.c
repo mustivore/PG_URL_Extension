@@ -6,6 +6,8 @@
 #include <regex.h>
 
 #define REGEX_URL "((http|https)://)(www.)?[a-zA-Z0-9@:%._\\+~#?&//=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%._\\+~#?&//=]*)"
+#define REGEX_HOST "(^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9])$)"
+#define REGEX_FILENAME "(^([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9/-]*[A-Za-z0-9])$)"
 
 PG_MODULE_MAGIC;
 
@@ -183,12 +185,51 @@ static void is_valid_url(const char* url_str){
 	}
 }
 
+
+static void is_valid_port(const int port){
+  if ( 0 > port || port > 65353){
+    elog(ERROR, "Please provide a valid port");
+  }
+}
+static void is_valid_host(const char* host){
+  regex_t regex;
+  int value_comp;
+  int value_match;
+  value_comp = regcomp(&regex, REGEX_HOST, REG_EXTENDED);
+  if (value_comp != 0) {
+        elog(ERROR, "Error while compiling the regex");
+    }
+  value_match = regexec(&regex, host, 0, NULL, 0);
+  if (value_match == REG_NOMATCH){
+    elog(ERROR, "Please provide a valid host");
+  }
+}
+static void is_valid_file (const char* filename){
+  regex_t regex;
+  int value_comp;
+  int value_match;
+  value_comp = regcomp(&regex, REGEX_FILENAME, REG_EXTENDED);
+  if (value_comp != 0) {
+        elog(ERROR, "Error while compiling the regex");
+    }
+  value_match = regexec(&regex, filename, 0, NULL, 0);
+  if (value_match == REG_NOMATCH){
+    elog(ERROR, "Please provide a valid file");
+  }
+}
+static void is_valid_protocol (const char* protocol){
+  if (!(strcmp(protocol, "http") == 0 || strcmp(protocol, "https") == 0)){
+    elog(ERROR, "Please provide a valid protocol");
+ 	} 
+}
+
+
 static int _url_cmp(char *url1_str, char *url2_str){
 	URL *url1 = (URL *) malloc(sizeof(URL));
 	URL *url2 = (URL *) malloc(sizeof(URL));
 	int diff;
 	parse_url(url1_str,url1);
-	parse_url(url1_str,url2);
+	parse_url(url2_str,url2);
 	diff = strcmp(url1->file, url2->file);
 	if(diff == 0){
 		free(url1);
@@ -203,7 +244,10 @@ static int _url_cmp(char *url1_str, char *url2_str){
 }
 
 Datum url_in(PG_FUNCTION_ARGS);
-// Datum create_url(PG_FUNCTION_ARGS);
+Datum make_url(PG_FUNCTION_ARGS);
+Datum make_url_cont_spec(PG_FUNCTION_ARGS);
+Datum make_url_prot_host_file(PG_FUNCTION_ARGS);
+Datum make_url_prot_host_port_file(PG_FUNCTION_ARGS);
 Datum url_out(PG_FUNCTION_ARGS);
 Datum get_protocol(PG_FUNCTION_ARGS);
 Datum get_default_port(PG_FUNCTION_ARGS);
@@ -213,6 +257,10 @@ Datum get_file(PG_FUNCTION_ARGS);
 Datum get_path(PG_FUNCTION_ARGS);
 Datum get_query(PG_FUNCTION_ARGS);
 Datum get_ref(PG_FUNCTION_ARGS);
+Datum equals(PG_FUNCTION_ARGS);
+Datum same_file(PG_FUNCTION_ARGS);
+Datum same_host(PG_FUNCTION_ARGS);
+
 
 PG_FUNCTION_INFO_V1(url_in);
 Datum url_in(PG_FUNCTION_ARGS) 
@@ -249,6 +297,71 @@ Datum url_out(PG_FUNCTION_ARGS)
 	PG_RETURN_CSTRING(url_str);
 }
 
+	PG_FUNCTION_INFO_V1(make_url);
+Datum make_url(PG_FUNCTION_ARGS)
+{
+	char *str_url;
+    url_db *var_url_db;
+	str_url = PG_GETARG_CSTRING(0);
+	is_valid_url(str_url);
+	var_url_db = (url_db *) cstring_to_text(str_url);
+	PG_RETURN_POINTER(var_url_db);
+}
+PG_FUNCTION_INFO_V1(make_url_prot_host_port_file);
+Datum make_url_prot_host_port_file(PG_FUNCTION_ARGS)
+{
+	char *str_prot;
+  int port_url;
+  char port_char[20];
+  char* str_host;
+  char*str_file;
+  url_db *var_url_db;
+  char final_url[512]="";
+	str_prot = PG_GETARG_CSTRING(0);
+  is_valid_protocol(str_prot);
+  //is_valid_url(str_url);
+  str_host =  PG_GETARG_CSTRING(1);
+  is_valid_host(str_host);
+  port_url = PG_GETARG_INT32(2);
+  is_valid_port(port_url);
+  sprintf(port_char, "%d", port_url);
+  str_file = PG_GETARG_CSTRING(3);
+  is_valid_file(str_file);
+  strcat(final_url,str_prot);
+  strcat(final_url, "://");
+  strcat(final_url, str_host);
+  strcat(final_url, ":");
+  strcat(final_url, port_char);
+  strcat(final_url, "/");
+  strcat(final_url, str_file);
+	var_url_db = (url_db *) cstring_to_text(final_url);
+	PG_RETURN_POINTER(var_url_db);
+}
+PG_FUNCTION_INFO_V1(make_url_prot_host_file);
+Datum make_url_prot_host_file(PG_FUNCTION_ARGS)
+{
+	char *str_prot;
+  char* str_host;
+  char*str_file;
+  url_db *var_url_db;
+  char final_url[512]="";
+	str_prot = PG_GETARG_CSTRING(0);
+  is_valid_protocol(str_prot);
+  str_host =  PG_GETARG_CSTRING(1);
+  is_valid_host(str_host);
+  str_file = PG_GETARG_CSTRING(2);
+  is_valid_file(str_file);
+  strcat(final_url,str_prot);
+  strcat(final_url, "://");
+  strcat(final_url, str_host);
+  strcat(final_url, "/");
+  strcat(final_url, str_file);
+	var_url_db = (url_db *) cstring_to_text(final_url);
+	PG_RETURN_POINTER(var_url_db);
+}
+
+
+
 PG_FUNCTION_INFO_V1(get_protocol);
 Datum get_protocol(PG_FUNCTION_ARGS) 
 {
@@ -259,18 +372,24 @@ Datum get_protocol(PG_FUNCTION_ARGS)
 	PG_RETURN_CSTRING(cstring_to_text(url->protocol));
 }
 
+static int get_default_port_from_str(char* url_str) 
+{
+	URL *url = (URL *) malloc(sizeof(URL));
+	parse_url(url_str, url);
+	if(strcmp(url->protocol,"https") == 0){
+		return 443;
+	} else {
+		return 80;
+	}
+	free(url);
+}
+
 PG_FUNCTION_INFO_V1(get_default_port);
 Datum get_default_port(PG_FUNCTION_ARGS) 
 {
 	Datum url_db = PG_GETARG_DATUM(0);
 	char *url_str = TextDatumGetCString(url_db);
-	URL *url = (URL *) malloc(sizeof(URL));
-	parse_url(url_str, url);
-	if(strcmp(url->protocol,"https") == 0){
-		PG_RETURN_INT32(443);
-	} else {
-		PG_RETURN_INT32(80);
-	}
+		PG_RETURN_INT32(get_default_port_from_str(url_str));
 }
 
 PG_FUNCTION_INFO_V1(get_authority);
@@ -366,6 +485,109 @@ Datum get_ref(PG_FUNCTION_ARGS)
 	}
 }
 
+/*static boolean equals_from_str(char* url1_str, char* url2_str) {
+	URL *url1 = (URL *) malloc(sizeof(URL));
+	URL *url2 = (URL *) malloc(sizeof(URL));
+	parse_url(url1_str,url1);
+	parse_url(url2_str,url2);
+	is_valid_url(url1_str);
+	is_valid_url(url2_str);
+	if (strcmp(url1->protocol, url2->protocol)) return false;
+	if (strcmp(url1->host, url2->host)) return false;
+	if (strcmp(url1->file, url2->file)) return false;
+	if (strcmp(url1->ref, url2->ref)) return false;
+	printf("%s %s --> %d %d",url1->host, url2->host, get_default_port_from_str(url1_str), get_default_port_from_str(url2_str) );
+
+	if (url1->port == -1 || url2->port == -1) {
+		printf("--> %d %d",get_default_port_from_str(url1_str), get_default_port_from_str(url2_str) );
+		if (get_default_port_from_str(url1_str) != get_default_port_from_str(url2_str)) return false; 
+	} else {
+		if (url1->port != url2->port) return false; 
+	}
+	return true;
+}*/
+
+
+/*PG_FUNCTION_INFO_V1(equals);
+Datum equals(PG_FUNCTION_ARGS)
+/*	Two URL objects are equal if they have the same protocol, reference equivalent hosts, 
+	have the same port number on the host, and the same file and fragment of the file. 
+	cf. https://docs.oracle.com/javase/8/docs/api/java/net/URL.html#equals-java.lang.Object * /
+{
+	Datum url_db1 = PG_GETARG_DATUM(0);
+	Datum url_db2 = PG_GETARG_DATUM(1);
+	char *url1_str = TextDatumGetCString(url_db1);
+	char *url2_str = TextDatumGetCString(url_db2);
+	PG_RETURN_BOOL(equals_from_str(url1_str, url2_str));
+}*/
+
+PG_FUNCTION_INFO_V1(equals);
+Datum equals(PG_FUNCTION_ARGS)
+/*	Two URL objects are equal if they have the same protocol, reference equivalent hosts, 
+	have the same port number on the host, and the same file and fragment of the file. 
+	cf. https://docs.oracle.com/javase/8/docs/api/java/net/URL.html#equals-java.lang.Object*/
+{
+	Datum url_db1 = PG_GETARG_DATUM(0);
+	Datum url_db2 = PG_GETARG_DATUM(1);
+	char *url1_str = TextDatumGetCString(url_db1);
+	char *url2_str = TextDatumGetCString(url_db2);
+	URL *url1 = (URL *) malloc(sizeof(URL));
+	URL *url2 = (URL *) malloc(sizeof(URL));
+	parse_url(url1_str,url1);
+	parse_url(url2_str,url2);
+	is_valid_url(url1_str);
+	is_valid_url(url2_str);
+	if (strcmp(url1->protocol, url2->protocol)) return false;
+	if (strcmp(url1->host, url2->host)) return false;
+	if (strcmp(url1->file, url2->file)) return false;
+	if (strcmp(url1->ref, url2->ref)) return false;
+	if (url1->port == -1 || url2->port == -1) {
+		if (get_default_port_from_str(url1_str) != get_default_port_from_str(url2_str)) return false; 
+	} else {
+		if (url1->port != url2->port) return false; 
+	}
+	PG_RETURN_BOOL(true);
+}
+
+
+PG_FUNCTION_INFO_V1(same_file);
+Datum same_file(PG_FUNCTION_ARGS)
+{
+	Datum url_db1 = PG_GETARG_DATUM(0);
+	Datum url_db2 = PG_GETARG_DATUM(1);
+	char *url1_str = TextDatumGetCString(url_db1);
+	char *url2_str = TextDatumGetCString(url_db2);
+	char *url1_short = strtok(url1_str,"#");
+	char *url2_short = strtok(url2_str,"#");
+	URL *url1 = (URL *) malloc(sizeof(URL));
+	URL *url2 = (URL *) malloc(sizeof(URL));
+	parse_url(url1_short, url1);
+	parse_url(url2_short, url2);	
+	if (strcmp(url1->host, url2->host)) return false;
+	if (strcmp(url1->file, url2->file)) return false;
+	//needs other checks ? 
+	PG_RETURN_BOOL(true);
+}
+
+PG_FUNCTION_INFO_V1(same_host);
+Datum same_host(PG_FUNCTION_ARGS)
+{
+	Datum url_db1 = PG_GETARG_DATUM(0);
+	Datum url_db2 = PG_GETARG_DATUM(1);
+	char *url1_str = TextDatumGetCString(url_db1);
+	char *url2_str = TextDatumGetCString(url_db2);
+	URL *url1 = (URL *) malloc(sizeof(URL));
+	URL *url2 = (URL *) malloc(sizeof(URL));
+	parse_url(url1_str, url1);
+	parse_url(url2_str, url2);	
+	if (strcmp(url1->host, url2->host)) return false;
+	//needs other checks ? 
+	PG_RETURN_BOOL(true);
+}
+
+
+
+
 PG_FUNCTION_INFO_V1(url_lt);
 Datum
 url_lt(PG_FUNCTION_ARGS)
@@ -434,3 +656,5 @@ url_cmp(PG_FUNCTION_ARGS)
 
 	PG_RETURN_INT32(_url_cmp(url1_str, url2_str));
 }
+
+
