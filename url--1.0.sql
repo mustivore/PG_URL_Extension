@@ -42,68 +42,68 @@ CREATE OR REPLACE FUNCTION make_url_prot_host_port_file(cstring,cstring ,integer
     STRICT
     LANGUAGE C
     AS '$libdir/url';
-    
+
 CREATE OR REPLACE FUNCTION make_url_prot_host_file(cstring,cstring, cstring) RETURNS url
         IMMUTABLE
         STRICT
         LANGUAGE C
         AS '$libdir/url';
 
-CREATE OR REPLACE FUNCTION get_protocol(url) RETURNS text
+CREATE OR REPLACE FUNCTION getProtocol(url) RETURNS text
     IMMUTABLE
     STRICT
     LANGUAGE C
     AS '$libdir/url';
 
-CREATE OR REPLACE FUNCTION get_default_port(url) RETURNS integer
+CREATE OR REPLACE FUNCTION getDefaultPort(url) RETURNS integer
     IMMUTABLE
     STRICT
     LANGUAGE C
     AS '$libdir/url';
 
-CREATE OR REPLACE FUNCTION get_authority(url) RETURNS text
+CREATE OR REPLACE FUNCTION getAuthority(url) RETURNS text
     IMMUTABLE
     STRICT
     LANGUAGE C
     AS '$libdir/url';    
 
-CREATE OR REPLACE FUNCTION get_user_info(url) RETURNS text
+CREATE OR REPLACE FUNCTION getUserInfo(url) RETURNS text
     IMMUTABLE
     STRICT
     LANGUAGE C
     AS '$libdir/url'; 
 
-CREATE OR REPLACE FUNCTION get_host(url) RETURNS text
+CREATE OR REPLACE FUNCTION getHost(url) RETURNS text
     IMMUTABLE
     STRICT
     LANGUAGE C
     AS '$libdir/url'; 
 
-CREATE OR REPLACE FUNCTION get_file(url) RETURNS text
+CREATE OR REPLACE FUNCTION getFile(url) RETURNS text
     IMMUTABLE
     STRICT
     LANGUAGE C
     AS '$libdir/url'; 
 
-CREATE OR REPLACE FUNCTION get_path(url) RETURNS text
+CREATE OR REPLACE FUNCTION getPath(url) RETURNS text
     IMMUTABLE
     STRICT
     LANGUAGE C
     AS '$libdir/url'; 
 
-CREATE OR REPLACE FUNCTION get_query(url) RETURNS text
+CREATE OR REPLACE FUNCTION getQuery(url) RETURNS text
     IMMUTABLE
     STRICT
     LANGUAGE C
     AS '$libdir/url'; 
 
-CREATE OR REPLACE FUNCTION get_port(url) RETURNS integer
+CREATE OR REPLACE FUNCTION getPort(url) RETURNS integer
     IMMUTABLE
     STRICT
     LANGUAGE C
     AS '$libdir/url'; 
 
-CREATE OR REPLACE FUNCTION get_ref(url) RETURNS text
+CREATE OR REPLACE FUNCTION getRef(url) RETURNS text
     IMMUTABLE
     STRICT
     LANGUAGE C
@@ -115,13 +115,13 @@ CREATE OR REPLACE FUNCTION equals(url, url) RETURNS boolean
     LANGUAGE C
     AS '$libdir/url';
 
-CREATE OR REPLACE FUNCTION same_file(url, url) RETURNS boolean
+CREATE OR REPLACE FUNCTION sameFile(url, url) RETURNS boolean
     IMMUTABLE
     STRICT
     LANGUAGE C
     AS '$libdir/url';
 
-CREATE OR REPLACE FUNCTION same_host(url, url) RETURNS boolean
+CREATE OR REPLACE FUNCTION sameHost(url, url) RETURNS boolean
 IMMUTABLE
 STRICT
 LANGUAGE C

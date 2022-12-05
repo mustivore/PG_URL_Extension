@@ -223,6 +223,17 @@ static void is_valid_protocol (const char* protocol){
  	} 
 }
 
+static int getDefaultPort_from_str(char* url_str) 
+{
+	URL *url = (URL *) malloc(sizeof(URL));
+	parse_url(url_str, url);
+	if(strcmp(url->protocol,"https") == 0){
+		return 443;
+	} else {
+		return 80;
+	}
+	free(url);
+}
 
 static int _url_cmp(char *url1_str, char *url2_str){
 	URL *url1 = (URL *) malloc(sizeof(URL));
@@ -249,17 +260,18 @@ Datum make_url_cont_spec(PG_FUNCTION_ARGS);
 Datum make_url_prot_host_file(PG_FUNCTION_ARGS);
 Datum make_url_prot_host_port_file(PG_FUNCTION_ARGS);
 Datum url_out(PG_FUNCTION_ARGS);
-Datum get_protocol(PG_FUNCTION_ARGS);
-Datum get_default_port(PG_FUNCTION_ARGS);
-Datum get_authority(PG_FUNCTION_ARGS);
-Datum get_host(PG_FUNCTION_ARGS);
-Datum get_file(PG_FUNCTION_ARGS);
-Datum get_path(PG_FUNCTION_ARGS);
-Datum get_query(PG_FUNCTION_ARGS);
-Datum get_ref(PG_FUNCTION_ARGS);
+Datum getProtocol(PG_FUNCTION_ARGS);
+Datum getDefaultPort(PG_FUNCTION_ARGS);
+Datum getUserInfo(PG_FUNCTION_ARGS);
+Datum getAuthority(PG_FUNCTION_ARGS);
+Datum getHost(PG_FUNCTION_ARGS);
+Datum getFile(PG_FUNCTION_ARGS);
+Datum getPath(PG_FUNCTION_ARGS);
+Datum getQuery(PG_FUNCTION_ARGS);
+Datum getRef(PG_FUNCTION_ARGS);
 Datum equals(PG_FUNCTION_ARGS);
-Datum same_file(PG_FUNCTION_ARGS);
-Datum same_host(PG_FUNCTION_ARGS);
+Datum sameFile(PG_FUNCTION_ARGS);
+Datum sameHost(PG_FUNCTION_ARGS);
 
 
 PG_FUNCTION_INFO_V1(url_in);
@@ -361,166 +373,6 @@ Datum make_url_prot_host_file(PG_FUNCTION_ARGS)
 }
 
 
-
-PG_FUNCTION_INFO_V1(get_protocol);
-Datum get_protocol(PG_FUNCTION_ARGS) 
-{
-	Datum url_db = PG_GETARG_DATUM(0);
-	char *url_str = TextDatumGetCString(url_db);
-	URL *url = (URL *) malloc(sizeof(URL));
-	parse_url(url_str, url);
-	PG_RETURN_CSTRING(cstring_to_text(url->protocol));
-}
-
-static int get_default_port_from_str(char* url_str) 
-{
-	URL *url = (URL *) malloc(sizeof(URL));
-	parse_url(url_str, url);
-	if(strcmp(url->protocol,"https") == 0){
-		return 443;
-	} else {
-		return 80;
-	}
-	free(url);
-}
-
-PG_FUNCTION_INFO_V1(get_default_port);
-Datum get_default_port(PG_FUNCTION_ARGS) 
-{
-	Datum url_db = PG_GETARG_DATUM(0);
-	char *url_str = TextDatumGetCString(url_db);
-		PG_RETURN_INT32(get_default_port_from_str(url_str));
-}
-
-PG_FUNCTION_INFO_V1(get_authority);
-Datum get_authority(PG_FUNCTION_ARGS) 
-{
-	Datum url_db = PG_GETARG_DATUM(0);
-	char *url_str = TextDatumGetCString(url_db);
-	URL *url = (URL *) malloc(sizeof(URL));
-	parse_url(url_str, url);
-	PG_RETURN_CSTRING(cstring_to_text(url->authority));
-}
-
-PG_FUNCTION_INFO_V1(get_user_info);
-Datum get_user_info(PG_FUNCTION_ARGS) 
-{
-	Datum url_db = PG_GETARG_DATUM(0);
-	char *url_str = TextDatumGetCString(url_db);
-	URL *url = (URL *) malloc(sizeof(URL));
-	parse_url(url_str, url);
-	if(strlen(url->user_info) == 0){
-		PG_RETURN_NULL();
-	} else {
-		PG_RETURN_CSTRING(cstring_to_text(url->user_info));
-	}
-}
-
-PG_FUNCTION_INFO_V1(get_host);
-Datum get_host(PG_FUNCTION_ARGS) 
-{
-	Datum url_db = PG_GETARG_DATUM(0);
-	char *url_str = TextDatumGetCString(url_db);
-	URL *url = (URL *) malloc(sizeof(URL));
-	parse_url(url_str, url);
-	PG_RETURN_CSTRING(cstring_to_text(url->host));
-}
-
-PG_FUNCTION_INFO_V1(get_file);
-Datum get_file(PG_FUNCTION_ARGS) 
-{
-	Datum url_db = PG_GETARG_DATUM(0);
-	char *url_str = TextDatumGetCString(url_db);
-	URL *url = (URL *) malloc(sizeof(URL));
-	parse_url(url_str, url);
-	PG_RETURN_CSTRING(cstring_to_text(url->file));
-}
-
-PG_FUNCTION_INFO_V1(get_path);
-Datum get_path(PG_FUNCTION_ARGS) 
-{
-	Datum url_db = PG_GETARG_DATUM(0);
-	char *url_str = TextDatumGetCString(url_db);
-	URL *url = (URL *) malloc(sizeof(URL));
-	parse_url(url_str, url);
-	PG_RETURN_CSTRING(cstring_to_text(url->path));
-}
-
-PG_FUNCTION_INFO_V1(get_query);
-Datum get_query(PG_FUNCTION_ARGS) 
-{
-	Datum url_db = PG_GETARG_DATUM(0);
-	char *url_str = TextDatumGetCString(url_db);
-	URL *url = (URL *) malloc(sizeof(URL));
-	parse_url(url_str, url);
-	if(strlen(url->query) == 0){
-		PG_RETURN_NULL();
-	} else {
-		PG_RETURN_CSTRING(cstring_to_text(url->query));
-	}
-	
-}
-
-PG_FUNCTION_INFO_V1(get_port);
-Datum get_port(PG_FUNCTION_ARGS) 
-{
-	Datum url_db = PG_GETARG_DATUM(0);
-	char *url_str = TextDatumGetCString(url_db);
-	URL *url = (URL *) malloc(sizeof(URL));
-	parse_url(url_str, url);
-	PG_RETURN_INT32(url->port);	
-}
-
-PG_FUNCTION_INFO_V1(get_ref);
-Datum get_ref(PG_FUNCTION_ARGS) 
-{
-	Datum url_db = PG_GETARG_DATUM(0);
-	char *url_str = TextDatumGetCString(url_db);
-	URL *url = (URL *) malloc(sizeof(URL));
-	parse_url(url_str, url);
-	if(strlen(url->ref) == 0){
-		PG_RETURN_NULL();
-	} else {
-		PG_RETURN_CSTRING(cstring_to_text(url->ref));	
-	}
-}
-
-/*static boolean equals_from_str(char* url1_str, char* url2_str) {
-	URL *url1 = (URL *) malloc(sizeof(URL));
-	URL *url2 = (URL *) malloc(sizeof(URL));
-	parse_url(url1_str,url1);
-	parse_url(url2_str,url2);
-	is_valid_url(url1_str);
-	is_valid_url(url2_str);
-	if (strcmp(url1->protocol, url2->protocol)) return false;
-	if (strcmp(url1->host, url2->host)) return false;
-	if (strcmp(url1->file, url2->file)) return false;
-	if (strcmp(url1->ref, url2->ref)) return false;
-	printf("%s %s --> %d %d",url1->host, url2->host, get_default_port_from_str(url1_str), get_default_port_from_str(url2_str) );
-
-	if (url1->port == -1 || url2->port == -1) {
-		printf("--> %d %d",get_default_port_from_str(url1_str), get_default_port_from_str(url2_str) );
-		if (get_default_port_from_str(url1_str) != get_default_port_from_str(url2_str)) return false; 
-	} else {
-		if (url1->port != url2->port) return false; 
-	}
-	return true;
-}*/
-
-
-/*PG_FUNCTION_INFO_V1(equals);
-Datum equals(PG_FUNCTION_ARGS)
-/*	Two URL objects are equal if they have the same protocol, reference equivalent hosts, 
-	have the same port number on the host, and the same file and fragment of the file. 
-	cf. https://docs.oracle.com/javase/8/docs/api/java/net/URL.html#equals-java.lang.Object * /
-{
-	Datum url_db1 = PG_GETARG_DATUM(0);
-	Datum url_db2 = PG_GETARG_DATUM(1);
-	char *url1_str = TextDatumGetCString(url_db1);
-	char *url2_str = TextDatumGetCString(url_db2);
-	PG_RETURN_BOOL(equals_from_str(url1_str, url2_str));
-}*/
-
 PG_FUNCTION_INFO_V1(equals);
 Datum equals(PG_FUNCTION_ARGS)
 /*	Two URL objects are equal if they have the same protocol, reference equivalent hosts, 
@@ -542,7 +394,7 @@ Datum equals(PG_FUNCTION_ARGS)
 	if (strcmp(url1->file, url2->file)) return false;
 	if (strcmp(url1->ref, url2->ref)) return false;
 	if (url1->port == -1 || url2->port == -1) {
-		if (get_default_port_from_str(url1_str) != get_default_port_from_str(url2_str)) return false; 
+		if (getDefaultPort_from_str(url1_str) != getDefaultPort_from_str(url2_str)) return false; 
 	} else {
 		if (url1->port != url2->port) return false; 
 	}
@@ -550,8 +402,122 @@ Datum equals(PG_FUNCTION_ARGS)
 }
 
 
-PG_FUNCTION_INFO_V1(same_file);
-Datum same_file(PG_FUNCTION_ARGS)
+PG_FUNCTION_INFO_V1(getProtocol);
+Datum getProtocol(PG_FUNCTION_ARGS) 
+{
+	Datum url_db = PG_GETARG_DATUM(0);
+	char *url_str = TextDatumGetCString(url_db);
+	URL *url = (URL *) malloc(sizeof(URL));
+	parse_url(url_str, url);
+	PG_RETURN_CSTRING(cstring_to_text(url->protocol));
+}
+
+PG_FUNCTION_INFO_V1(getUserInfo);
+Datum getUserInfo(PG_FUNCTION_ARGS) 
+{
+	Datum url_db = PG_GETARG_DATUM(0);
+	char *url_str = TextDatumGetCString(url_db);
+	URL *url = (URL *) malloc(sizeof(URL));
+	parse_url(url_str, url);
+	if(strlen(url->user_info) == 0){
+		PG_RETURN_NULL();
+	} else {
+		PG_RETURN_CSTRING(cstring_to_text(url->user_info));
+	}
+}
+
+PG_FUNCTION_INFO_V1(getAuthority);
+Datum getAuthority(PG_FUNCTION_ARGS) 
+{
+	Datum url_db = PG_GETARG_DATUM(0);
+	char *url_str = TextDatumGetCString(url_db);
+	URL *url = (URL *) malloc(sizeof(URL));
+	parse_url(url_str, url);
+	PG_RETURN_CSTRING(cstring_to_text(url->authority));
+}
+
+
+PG_FUNCTION_INFO_V1(getHost);
+Datum getHost(PG_FUNCTION_ARGS) 
+{
+	Datum url_db = PG_GETARG_DATUM(0);
+	char *url_str = TextDatumGetCString(url_db);
+	URL *url = (URL *) malloc(sizeof(URL));
+	parse_url(url_str, url);
+	PG_RETURN_CSTRING(cstring_to_text(url->host));
+}
+
+PG_FUNCTION_INFO_V1(getPort);
+Datum getPort(PG_FUNCTION_ARGS) 
+{
+	Datum url_db = PG_GETARG_DATUM(0);
+	char *url_str = TextDatumGetCString(url_db);
+	URL *url = (URL *) malloc(sizeof(URL));
+	parse_url(url_str, url);
+	PG_RETURN_INT32(url->port);	
+}
+
+PG_FUNCTION_INFO_V1(getDefaultPort);
+Datum getDefaultPort(PG_FUNCTION_ARGS) 
+{
+	Datum url_db = PG_GETARG_DATUM(0);
+	char *url_str = TextDatumGetCString(url_db);
+		PG_RETURN_INT32(getDefaultPort_from_str(url_str));
+}
+
+
+PG_FUNCTION_INFO_V1(getFile);
+Datum getFile(PG_FUNCTION_ARGS) 
+{
+	Datum url_db = PG_GETARG_DATUM(0);
+	char *url_str = TextDatumGetCString(url_db);
+	URL *url = (URL *) malloc(sizeof(URL));
+	parse_url(url_str, url);
+	PG_RETURN_CSTRING(cstring_to_text(url->file));
+}
+
+PG_FUNCTION_INFO_V1(getPath);
+Datum getPath(PG_FUNCTION_ARGS) 
+{
+	Datum url_db = PG_GETARG_DATUM(0);
+	char *url_str = TextDatumGetCString(url_db);
+	URL *url = (URL *) malloc(sizeof(URL));
+	parse_url(url_str, url);
+	PG_RETURN_CSTRING(cstring_to_text(url->path));
+}
+
+PG_FUNCTION_INFO_V1(getQuery);
+Datum getQuery(PG_FUNCTION_ARGS) 
+{
+	Datum url_db = PG_GETARG_DATUM(0);
+	char *url_str = TextDatumGetCString(url_db);
+	URL *url = (URL *) malloc(sizeof(URL));
+	parse_url(url_str, url);
+	if(strlen(url->query) == 0){
+		PG_RETURN_NULL();
+	} else {
+		PG_RETURN_CSTRING(cstring_to_text(url->query));
+	}
+	
+}
+
+PG_FUNCTION_INFO_V1(getRef);
+Datum getRef(PG_FUNCTION_ARGS) 
+{
+	Datum url_db = PG_GETARG_DATUM(0);
+	char *url_str = TextDatumGetCString(url_db);
+	URL *url = (URL *) malloc(sizeof(URL));
+	parse_url(url_str, url);
+	if(strlen(url->ref) == 0){
+		PG_RETURN_NULL();
+	} else {
+		PG_RETURN_CSTRING(cstring_to_text(url->ref));	
+	}
+}
+
+
+PG_FUNCTION_INFO_V1(sameFile);
+Datum sameFile(PG_FUNCTION_ARGS)
 {
 	Datum url_db1 = PG_GETARG_DATUM(0);
 	Datum url_db2 = PG_GETARG_DATUM(1);
@@ -569,8 +535,8 @@ Datum same_file(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(true);
 }
 
-PG_FUNCTION_INFO_V1(same_host);
-Datum same_host(PG_FUNCTION_ARGS)
+PG_FUNCTION_INFO_V1(sameHost);
+Datum sameHost(PG_FUNCTION_ARGS)
 {
 	Datum url_db1 = PG_GETARG_DATUM(0);
 	Datum url_db2 = PG_GETARG_DATUM(1);

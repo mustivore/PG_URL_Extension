@@ -11,7 +11,6 @@ CREATE TABLE test (
 INSERT INTO test(id, link) VALUES (1, 'http://www.google.com');
 INSERT INTO test(id, link) VALUES (2, 'https://www.google.com');
 INSERT INTO test(id, link) VALUES (3, 'https://www.google.com:443');
---INSERT INTO test(id, link) VALUES (3, 'www.google.com'); --should not work
 INSERT INTO test(id, link) VALUES (4, 'https://www.ulb.be');
 INSERT INTO test(id, link) VALUES (5, 'https://www.ulb.ac.be');
 INSERT INTO test(id, link) VALUES (6, 'https://cs.ulb.ac.be/public/teaching/infoh415#exercices');
@@ -24,19 +23,19 @@ SELECT * from test;
 
 
 SELECT 	id, 
-		get_authority(link), 
-		get_default_port(link), 
-		get_file(link), 
-		get_host(link), 
-		get_path(link), 
-		get_port(link), 
-		get_protocol(link), 
-		get_query(link), 
-		get_ref(link), 
-		get_user_info(link) 
+		getAuthority(link), 
+		getDefaultPort(link), 
+		getFile(link), 
+		getHost(link), 
+		getPath(link), 
+		getPort(link), 
+		getProtocol(link), 
+		getQuery(link), 
+		getRef(link), 
+		getUserInfo(link) 
 FROM test 
 WHERE 
 		--equals(link, 'https://www.google.com:443')
 		--same_file(link, 'https://cs.ulb.ac.be/public/teaching/infoh415#project')
-		same_host(link, 'https://www.ulb.be')
+		sameHost(link, 'https://www.ulb.be')
 		;
