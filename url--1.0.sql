@@ -97,6 +97,18 @@ CREATE OR REPLACE FUNCTION equals(url, url) RETURNS boolean
     LANGUAGE C
     AS '$libdir/url';
 
+CREATE OR REPLACE FUNCTION same_file(url, url) RETURNS boolean
+    IMMUTABLE
+    STRICT
+    LANGUAGE C
+    AS '$libdir/url';
+
+CREATE OR REPLACE FUNCTION same_host(url, url) RETURNS boolean
+IMMUTABLE
+STRICT
+LANGUAGE C
+AS '$libdir/url';
+
 CREATE FUNCTION url_cmp(url, url) RETURNS integer
     IMMUTABLE
     STRICT
