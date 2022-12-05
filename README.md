@@ -1,9 +1,13 @@
-# PG_URL_Extension
+# PostgreSQL Extension for URL
 
-install librairies : 
-```sudo apt install sudo apt install postgresql-server-dev-15```
+This extension implement the Java Class URL into PostgreSQL. 
+See doc : [https://docs.oracle.com/javase/8/docs/api/java/net/URL.html#URL-java.net.URL-java.lang.String]
+
+install librairies (change 'XX' with your postgres version) : 
+```sudo apt install sudo apt install postgresql-server-dev-XX```
 
 intall the extension :
-```make
+```
+make
 sudo make install ```
 
