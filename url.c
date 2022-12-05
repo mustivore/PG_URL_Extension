@@ -85,10 +85,12 @@ static void retrieve_host(const char* url_str, URL *url)
 	char *url_to_stroke = malloc(sizeof(char)*(strlen(url_str)+1));
 	strcpy(url_to_stroke, url_str);
 	url->host = malloc(sizeof(char)*(strlen(url_str)+1));
+	printf("%s\n", url_to_stroke);
 	e = strchr(url_to_stroke,'@');
 	if (e != NULL) {
 		e = e + 1;
 		strcpy(url->host, e);
+		printf("-->", url->host);
 	}else{
 		strcpy(url->host, url_to_stroke);
 	}
@@ -188,7 +190,7 @@ static int _url_cmp(char *url1_str, char *url2_str){
 	URL *url2 = (URL *) malloc(sizeof(URL));
 	int diff;
 	parse_url(url1_str,url1);
-	parse_url(url1_str,url2);
+	parse_url(url2_str,url2);
 	diff = strcmp(url1->file, url2->file);
 	if(diff == 0){
 		free(url1);
@@ -213,6 +215,7 @@ Datum get_file(PG_FUNCTION_ARGS);
 Datum get_path(PG_FUNCTION_ARGS);
 Datum get_query(PG_FUNCTION_ARGS);
 Datum get_ref(PG_FUNCTION_ARGS);
+Datum equals(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(url_in);
 Datum url_in(PG_FUNCTION_ARGS) 
@@ -259,18 +262,24 @@ Datum get_protocol(PG_FUNCTION_ARGS)
 	PG_RETURN_CSTRING(cstring_to_text(url->protocol));
 }
 
+static int _get_default_port(char* url_str) 
+{
+	URL *url = (URL *) malloc(sizeof(URL));
+	parse_url(url_str, url);
+	if(strcmp(url->protocol,"https") == 0){
+		return 443;
+	} else {
+		return 80;
+	}
+	free(url);
+}
+
 PG_FUNCTION_INFO_V1(get_default_port);
 Datum get_default_port(PG_FUNCTION_ARGS) 
 {
 	Datum url_db = PG_GETARG_DATUM(0);
 	char *url_str = TextDatumGetCString(url_db);
-	URL *url = (URL *) malloc(sizeof(URL));
-	parse_url(url_str, url);
-	if(strcmp(url->protocol,"https") == 0){
-		PG_RETURN_INT32(443);
-	} else {
-		PG_RETURN_INT32(80);
-	}
+		PG_RETURN_INT32(_get_default_port(url_str));
 }
 
 PG_FUNCTION_INFO_V1(get_authority);
@@ -366,6 +375,42 @@ Datum get_ref(PG_FUNCTION_ARGS)
 	}
 }
 
+PG_FUNCTION_INFO_V1(equals);
+Datum equals(PG_FUNCTION_ARGS)
+/*	Two URL objects are equal if they have the same protocol, reference equivalent hosts, 
+	have the same port number on the host, and the same file and fragment of the file. 
+	cf. https://docs.oracle.com/javase/8/docs/api/java/net/URL.html#equals-java.lang.Object*/
+{
+	printf("In equals function\n");
+	Datum url_db1 = PG_GETARG_DATUM(0);
+	Datum url_db2 = PG_GETARG_DATUM(1);
+	char *url1_str = TextDatumGetCString(url_db1);
+	char *url2_str = TextDatumGetCString(url_db2);
+	URL *url1 = (URL *) malloc(sizeof(URL));
+	URL *url2 = (URL *) malloc(sizeof(URL));
+	parse_url(url1_str,url1);
+	parse_url(url2_str,url2);
+	is_valid_url(url1_str);
+	is_valid_url(url2_str);
+	if (strcmp(url1->protocol, url2->protocol)) return false;
+	if (strcmp(url1->host, url2->host)) return false;
+	if (strcmp(url1->file, url2->file)) return false;
+	if (strcmp(url1->ref, url2->ref)) return false;
+	if (url1->port == -1 || url2->port == -1) {
+		if (_get_default_port(url1_str) != _get_default_port(url2_str)) return false; 
+	} else {
+		if (url1->port != url2->port) return false; 
+	}
+	PG_RETURN_BOOL(true);
+}
+
+
+
+
+
+
+
+
 PG_FUNCTION_INFO_V1(url_lt);
 Datum
 url_lt(PG_FUNCTION_ARGS)
@@ -434,3 +479,5 @@ url_cmp(PG_FUNCTION_ARGS)
 
 	PG_RETURN_INT32(_url_cmp(url1_str, url2_str));
 }
+
+

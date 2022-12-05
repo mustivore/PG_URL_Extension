@@ -8,10 +8,10 @@ RETURNS url
 AS '$libdir/url'
 LANGUAGE C IMMUTABLE STRICT;
 
--- CREATE OR REPLACE FUNCTION url_in(cstring, cstring, integer, cstring)
--- RETURNS url
--- AS '$libdir/url'
--- LANGUAGE C IMMUTABLE STRICT;
+CREATE OR REPLACE FUNCTION url_in(cstring, cstring, integer, cstring)
+RETURNS url
+AS '$libdir/url'
+LANGUAGE C IMMUTABLE STRICT;
 
 -- CREATE OR REPLACE FUNCTION create_url(cstring, cstring, cstring)
 -- RETURNS url
@@ -90,6 +90,12 @@ CREATE OR REPLACE FUNCTION get_ref(url) RETURNS text
     STRICT
     LANGUAGE C
     AS '$libdir/url'; 
+
+CREATE OR REPLACE FUNCTION equals(url, url) RETURNS boolean
+    IMMUTABLE
+    STRICT
+    LANGUAGE C
+    AS '$libdir/url';
 
 CREATE FUNCTION url_cmp(url, url) RETURNS integer
     IMMUTABLE
