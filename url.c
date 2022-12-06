@@ -185,12 +185,12 @@ static void is_valid_url(const char* url_str){
 	}
 }
 
-
 static void is_valid_port(const int port){
   if ( 0 > port || port > 65353){
     elog(ERROR, "Please provide a valid port");
   }
 }
+
 static void is_valid_host(const char* host){
   regex_t regex;
   int value_comp;
@@ -226,7 +226,7 @@ static void is_valid_protocol (const char* protocol){
 
 static int _url_cmp(URL *url1, URL *url2){
 	int diff;
-	diff = strcmp(url1->file, url2->file);
+	diff = strcmp(url1->protocol, url2->protocol);
 	if(diff == 0){
 		diff = strcmp(url1->authority, url2->authority);
 		if (diff == 0){
@@ -238,7 +238,6 @@ static int _url_cmp(URL *url1, URL *url2){
 }
 
 Datum url_in(PG_FUNCTION_ARGS);
-Datum make_url(PG_FUNCTION_ARGS);
 Datum make_url_cont_spec(PG_FUNCTION_ARGS);
 Datum make_url_prot_host_file(PG_FUNCTION_ARGS);
 Datum make_url_prot_host_port_file(PG_FUNCTION_ARGS);
@@ -251,7 +250,6 @@ Datum get_file(PG_FUNCTION_ARGS);
 Datum get_path(PG_FUNCTION_ARGS);
 Datum get_query(PG_FUNCTION_ARGS);
 Datum get_ref(PG_FUNCTION_ARGS);
-Datum equals(PG_FUNCTION_ARGS);
 Datum url_same_host(PG_FUNCTION_ARGS);
 Datum url_same_file(PG_FUNCTION_ARGS);
 
@@ -274,16 +272,6 @@ Datum url_out(PG_FUNCTION_ARGS)
 	PG_RETURN_CSTRING(url_str);
 }
 
-	PG_FUNCTION_INFO_V1(make_url);
-Datum make_url(PG_FUNCTION_ARGS)
-{
-	char *str_url;
-    url_db *var_url_db;
-	str_url = PG_GETARG_CSTRING(0);
-	is_valid_url(str_url);
-	var_url_db = (url_db *) cstring_to_text(str_url);
-	PG_RETURN_POINTER(var_url_db);
-}
 
 PG_FUNCTION_INFO_V1(make_url_prot_host_port_file);
 Datum make_url_prot_host_port_file(PG_FUNCTION_ARGS)

@@ -8,11 +8,6 @@ RETURNS url
 AS '$libdir/url'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION url_in(cstring, cstring, integer, cstring)
-RETURNS url
-AS '$libdir/url'
-LANGUAGE C IMMUTABLE STRICT;
-
 -- CREATE OR REPLACE FUNCTION create_url(cstring, cstring, cstring)
 -- RETURNS url
 -- AS '$libdir/url'
@@ -30,12 +25,6 @@ CREATE TYPE url (
 	LIKE           = varchar,
 	CATEGORY       = 'N'
 );
-
-CREATE OR REPLACE FUNCTION make_url(cstring) RETURNS url
-    IMMUTABLE
-    STRICT
-    LANGUAGE C
-    AS '$libdir/url';
 
 CREATE OR REPLACE FUNCTION make_url_prot_host_port_file(cstring,cstring ,integer, cstring) RETURNS url
     IMMUTABLE
@@ -108,24 +97,6 @@ CREATE OR REPLACE FUNCTION get_ref(url) RETURNS text
     STRICT
     LANGUAGE C
     AS '$libdir/url'; 
-
-CREATE OR REPLACE FUNCTION equals(url, url) RETURNS boolean
-    IMMUTABLE
-    STRICT
-    LANGUAGE C
-    AS '$libdir/url';
-
-CREATE OR REPLACE FUNCTION same_file(url, url) RETURNS boolean
-    IMMUTABLE
-    STRICT
-    LANGUAGE C
-    AS '$libdir/url';
-
-CREATE OR REPLACE FUNCTION same_host(url, url) RETURNS boolean
-IMMUTABLE
-STRICT
-LANGUAGE C
-AS '$libdir/url';
 
 CREATE FUNCTION url_cmp(url, url) RETURNS integer
     IMMUTABLE
@@ -265,5 +236,5 @@ CREATE FUNCTION url_same_host(url, url) RETURNS boolean
 
 CREATE FUNCTION sameHost(url, url)
   RETURNS boolean
-  AS 'SELECT $1 OPERATOR(=) $2 OR url_same_host($1,$2)'
+  AS 'SELECT $1 OPERATOR(=) $2 AND url_same_host($1,$2)'
   LANGUAGE SQL IMMUTABLE STRICT;
