@@ -382,9 +382,7 @@ Datum make_url_cont_spec(PG_FUNCTION_ARGS) {
 		strcat(final_url,url->protocol);
 		strcat(final_url, "://");
 	 	strcat(final_url, url->host);
-	 	char only_one_char = spec[0];
-	 	printf("%d\n", only_one_char == '/');
-		if (only_one_char=='/') { //spec is an absolute path
+		if (spec[0]=='/') { //spec is an absolute path
 			strcat(final_url, spec); 
 		} else {
 			is_valid_file(spec); //spec is a relative path
@@ -396,23 +394,6 @@ Datum make_url_cont_spec(PG_FUNCTION_ARGS) {
 	var_url_db = (url_db *) cstring_to_text(final_url);
 	PG_RETURN_POINTER(var_url_db);
 	}
-
-
-
-	/*char *str_prot;
-   char* str_host;
-   char*str_file;
-   char final_url[512]="";
-   if (newURL) {
-   	strcpy(final
-   		_url, spec);
-   }
-   if (path in spec) :
-   	keep ocntext but change path;
-
-  else
-  		keep context and add file*/
-
 
 PG_FUNCTION_INFO_V1(get_protocol);
 Datum get_protocol(PG_FUNCTION_ARGS) 
@@ -536,42 +517,6 @@ Datum get_ref(PG_FUNCTION_ARGS)
 		PG_RETURN_CSTRING(cstring_to_text(url->ref));	
 	}
 }
-
-/*static boolean equals_from_str(char* url1_str, char* url2_str) {
-	URL *url1 = (URL *) malloc(sizeof(URL));
-	URL *url2 = (URL *) malloc(sizeof(URL));
-	parse_url(url1_str,url1);
-	parse_url(url2_str,url2);
-	is_valid_url(url1_str);
-	is_valid_url(url2_str);
-	if (strcmp(url1->protocol, url2->protocol)) return false;
-	if (strcmp(url1->host, url2->host)) return false;
-	if (strcmp(url1->file, url2->file)) return false;
-	if (strcmp(url1->ref, url2->ref)) return false;
-	printf("%s %s --> %d %d",url1->host, url2->host, get_default_port_from_str(url1_str), get_default_port_from_str(url2_str) );
-
-	if (url1->port == -1 || url2->port == -1) {
-		printf("--> %d %d",get_default_port_from_str(url1_str), get_default_port_from_str(url2_str) );
-		if (get_default_port_from_str(url1_str) != get_default_port_from_str(url2_str)) return false; 
-	} else {
-		if (url1->port != url2->port) return false; 
-	}
-	return true;
-}*/
-
-
-/*PG_FUNCTION_INFO_V1(equals);
-Datum equals(PG_FUNCTION_ARGS)
-/*	Two URL objects are equal if they have the same protocol, reference equivalent hosts, 
-	have the same port number on the host, and the same file and fragment of the file. 
-	cf. https://docs.oracle.com/javase/8/docs/api/java/net/URL.html#equals-java.lang.Object * /
-{
-	Datum url_db1 = PG_GETARG_DATUM(0);
-	Datum url_db2 = PG_GETARG_DATUM(1);
-	char *url1_str = TextDatumGetCString(url_db1);
-	char *url2_str = TextDatumGetCString(url_db2);
-	PG_RETURN_BOOL(equals_from_str(url1_str, url2_str));
-}*/
 
 PG_FUNCTION_INFO_V1(equals);
 Datum equals(PG_FUNCTION_ARGS)

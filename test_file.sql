@@ -21,9 +21,12 @@ INSERT INTO test(id, link) VALUES (9, 'https://www.ulb.be:443/?q=email@address.c
 INSERT INTO test(id, link) VALUES (10, make_url_cont_spec('https://www.coucou.be/hello', 'https://goodbye.com/seeU')); --spec replace context
 INSERT INTO test(id, link) VALUES (11, make_url_cont_spec('https://www.coucou.be/hello', 'resources/images/goodbye.png')); --add spec path to context path
 INSERT INTO test(id, link) VALUES (12, make_url_cont_spec('https://www.coucou.be/hello', '/blog/data/resources/images/goodbye.png')); --keep context host but replace path
+INSERT INTO test(id, link) VALUES (13, make_url_prot_host_port_file('https', 'www.ulb.be', 443, 'index.html' ));
+INSERT INTO test(id, link) VALUES (14, make_url_prot_host_file('https', 'www.ulb.be', 'index.html' ));
+INSERT INTO test(id, link) VALUES (15, make_url('https://www.ulb.ac.be'));
+
 
 SELECT * from test;
-
 
 SELECT 	id, 
 		get_authority(link), 
@@ -40,5 +43,5 @@ FROM test
 WHERE 
 		--equals(link, 'https://www.google.com:443')
 		--same_file(link, 'https://cs.ulb.ac.be/public/teaching/infoh415#project')
-		same_host(link, 'https://www.coucou.be')
+		--same_host(link, 'https://www.coucou.be')
 		;
