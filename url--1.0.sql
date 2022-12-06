@@ -8,10 +8,10 @@ RETURNS url
 AS '$libdir/url'
 LANGUAGE C IMMUTABLE STRICT;
 
--- CREATE OR REPLACE FUNCTION url_in(cstring, cstring, integer, cstring)
--- RETURNS url
--- AS '$libdir/url'
--- LANGUAGE C IMMUTABLE STRICT;
+CREATE OR REPLACE FUNCTION url_in(cstring, cstring, integer, cstring)
+RETURNS url
+AS '$libdir/url'
+LANGUAGE C IMMUTABLE STRICT;
 
 -- CREATE OR REPLACE FUNCTION create_url(cstring, cstring, cstring)
 -- RETURNS url
@@ -30,6 +30,24 @@ CREATE TYPE url (
 	LIKE           = varchar,
 	CATEGORY       = 'N'
 );
+
+CREATE OR REPLACE FUNCTION make_url(cstring) RETURNS url
+    IMMUTABLE
+    STRICT
+    LANGUAGE C
+    AS '$libdir/url';
+
+CREATE OR REPLACE FUNCTION make_url_prot_host_port_file(cstring,cstring ,integer, cstring) RETURNS url
+    IMMUTABLE
+    STRICT
+    LANGUAGE C
+    AS '$libdir/url';
+    
+CREATE OR REPLACE FUNCTION make_url_prot_host_file(cstring,cstring, cstring) RETURNS url
+        IMMUTABLE
+        STRICT
+        LANGUAGE C
+        AS '$libdir/url';
 
 CREATE OR REPLACE FUNCTION get_protocol(url) RETURNS text
     IMMUTABLE
@@ -90,6 +108,24 @@ CREATE OR REPLACE FUNCTION get_ref(url) RETURNS text
     STRICT
     LANGUAGE C
     AS '$libdir/url'; 
+
+CREATE OR REPLACE FUNCTION equals(url, url) RETURNS boolean
+    IMMUTABLE
+    STRICT
+    LANGUAGE C
+    AS '$libdir/url';
+
+CREATE OR REPLACE FUNCTION same_file(url, url) RETURNS boolean
+    IMMUTABLE
+    STRICT
+    LANGUAGE C
+    AS '$libdir/url';
+
+CREATE OR REPLACE FUNCTION same_host(url, url) RETURNS boolean
+IMMUTABLE
+STRICT
+LANGUAGE C
+AS '$libdir/url';
 
 CREATE FUNCTION url_cmp(url, url) RETURNS integer
     IMMUTABLE
