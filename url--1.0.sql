@@ -49,6 +49,12 @@ CREATE OR REPLACE FUNCTION make_url_prot_host_file(cstring,cstring, cstring) RET
         LANGUAGE C
         AS '$libdir/url';
 
+CREATE OR REPLACE FUNCTION make_url_cont_spec(cstring,cstring) RETURNS url
+        IMMUTABLE
+        STRICT
+        LANGUAGE C
+        AS '$libdir/url';
+
 CREATE OR REPLACE FUNCTION get_protocol(url) RETURNS text
     IMMUTABLE
     STRICT

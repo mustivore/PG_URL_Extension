@@ -18,7 +18,9 @@ INSERT INTO test(id, link) VALUES (6, 'https://cs.ulb.ac.be/public/teaching/info
 INSERT INTO test(id, link) VALUES (7, 'https://uv.ulb.ac.be/pluginfile.php/3623050/mod_resource/content/1/Project2%20-%20DB%20Extension.pdf');
 INSERT INTO test(id, link) VALUES (8, 'https://docs.github.com/en/get-started/getting-started-with-git/about-remote-repositories#cloning-with-https-urls');
 INSERT INTO test(id, link) VALUES (9, 'https://www.ulb.be:443/?q=email@address.com'); --check if '@' char doesn't screw up
-
+INSERT INTO test(id, link) VALUES (10, make_url_cont_spec('https://www.coucou.be/hello', 'https://goodbye.com/seeU')); --spec replace context
+INSERT INTO test(id, link) VALUES (11, make_url_cont_spec('https://www.coucou.be/hello', 'resources/images/goodbye.png')); --add spec path to context path
+INSERT INTO test(id, link) VALUES (12, make_url_cont_spec('https://www.coucou.be/hello', '/blog/data/resources/images/goodbye.png')); --keep context host but replace path
 
 SELECT * from test;
 
@@ -38,5 +40,5 @@ FROM test
 WHERE 
 		--equals(link, 'https://www.google.com:443')
 		--same_file(link, 'https://cs.ulb.ac.be/public/teaching/infoh415#project')
-		same_host(link, 'https://www.ulb.be')
+		same_host(link, 'https://www.coucou.be')
 		;
