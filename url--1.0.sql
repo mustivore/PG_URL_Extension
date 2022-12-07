@@ -225,8 +225,8 @@ CREATE FUNCTION url_same_file(url, url) RETURNS boolean
 
 CREATE FUNCTION sameFile(url, url)
   RETURNS boolean
-  AS 'SELECT $1 OPERATOR(=) $2 OR url_same_file($1,$2)'
-  LANGUAGE SQL IMMUTABLE STRICT;
+  AS 'SELECT $1 OPERATOR(>=) url_in(''http://0'') AND $2 OPERATOR(>=) url_in(''http://0'') AND url_same_file($1,$2)'
+  LANGUAGE SQL IMMUTABLE;
 
 CREATE FUNCTION url_same_host(url, url) RETURNS boolean
     IMMUTABLE
@@ -236,5 +236,5 @@ CREATE FUNCTION url_same_host(url, url) RETURNS boolean
 
 CREATE FUNCTION sameHost(url, url)
   RETURNS boolean
-  AS 'SELECT $1 OPERATOR(=) $2 AND url_same_host($1,$2)'
-  LANGUAGE SQL IMMUTABLE STRICT;
+  AS 'SELECT $1 OPERATOR(>=) url_in(''http://0'') AND $2 OPERATOR(>=) url_in(''http://0'') AND url_same_host($1,$2)'
+  LANGUAGE SQL IMMUTABLE;

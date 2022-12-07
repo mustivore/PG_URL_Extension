@@ -5,7 +5,7 @@
 #include <string.h>
 #include <regex.h>
 
-#define REGEX_URL "((http|https)://)(www.)?[a-zA-Z0-9@:%._\\+~#?&//=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%._\\+~#?&//=]*)"
+#define REGEX_URL "((http|https)://)(www.)?[a-zA-Z0-9@:%._\\+~#?&//=]{1,256}(\\.[a-z]{2,6}\\b)?([-a-zA-Z0-9@:%._\\+~#?&//=]*)"
 #define REGEX_HOST "(^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9])$)"
 #define REGEX_FILENAME "(^([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9/-]*[A-Za-z0-9])$)"
 
