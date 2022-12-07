@@ -7,7 +7,7 @@
 
 #define REGEX_URL "((http|https)://)(www.)?[a-zA-Z0-9@:%._\\+~#?&//=]{1,256}(\\.[a-z]{2,6}\\b)?([-a-zA-Z0-9@:%._\\+~#?&//=]*)"
 #define REGEX_HOST "(^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9])$)"
-#define REGEX_FILENAME "(^([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9/-]*[A-Za-z0-9])$)"
+#define REGEX_FILENAME "(^([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\./-]*[A-Za-z0-9])$)"
 
 PG_MODULE_MAGIC;
 
@@ -84,8 +84,10 @@ static void retrieve_userinfo(const char* url_str, URL *url)
 static void retrieve_host(const char* url_str, URL *url)
 {
 	char *e;
+	char *token;
 	char *url_to_stroke = malloc(sizeof(char)*(strlen(url_str)+1));
 	strcpy(url_to_stroke, url_str);
+	token = strtok(url_to_stroke, ":");
 	url->host = malloc(sizeof(char)*(strlen(url_str)+1));
 	e = strchr(url_to_stroke,'@');
 	if (e != NULL) {
@@ -171,7 +173,7 @@ static void parse_url(char* url_str, URL *url)
 	retrieve_query_from_file(url->file,url);
 }
 
-static void is_valid_url(const char* url_str){
+static bool is_valid_url(const char* url_str, bool return_statement){
 	regex_t regex;
 	int value_comp;
 	int value_match;
@@ -181,8 +183,13 @@ static void is_valid_url(const char* url_str){
     }
 	value_match = regexec(&regex, url_str, 0, NULL, 0);
 	if (value_match == REG_NOMATCH){
-		elog(ERROR, "Please provide a valid URL");
+		if (return_statement) {
+			return false;
+		} else {
+			elog(ERROR, "Please provide a valid URL");
+		}
 	}
+	return true;
 }
 
 static void is_valid_port(const int port){
@@ -259,7 +266,7 @@ Datum url_in(PG_FUNCTION_ARGS)
 	char *str_url;
     url_db *var_url_db;
 	str_url = PG_GETARG_CSTRING(0);
-	is_valid_url(str_url);
+	is_valid_url(str_url, false);
 	var_url_db = (url_db *) cstring_to_text(str_url);
 	PG_RETURN_POINTER(var_url_db);
 }
@@ -327,7 +334,33 @@ Datum make_url_prot_host_file(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(var_url_db);
 }
 
-
+PG_FUNCTION_INFO_V1(make_url_cont_spec);
+Datum make_url_cont_spec(PG_FUNCTION_ARGS) {
+	char* context = PG_GETARG_CSTRING(0);
+	char* spec = PG_GETARG_CSTRING(1);
+	url_db *var_url_db;
+	char final_url[512]="";
+	if (is_valid_url(spec, true)) { //1. check whether spec is a complete URL
+		 strcat(final_url, spec);//only keep spec
+	} else { //keep context
+		URL *url = (URL *) malloc(sizeof(URL)); 
+		is_valid_url(context, false);
+		parse_url(context, url);
+		strcat(final_url,url->protocol);
+		strcat(final_url, "://");
+	 	strcat(final_url, url->host);
+		if (spec[0]=='/') { //spec is an absolute path
+			strcat(final_url, spec); 
+		} else {
+			is_valid_file(spec); //spec is a relative path
+			strcat(final_url, url->path);
+			strcat(final_url, "/");
+			strcat(final_url, spec); 
+		}
+	}
+	var_url_db = (url_db *) cstring_to_text(final_url);
+	PG_RETURN_POINTER(var_url_db);
+	}
 
 PG_FUNCTION_INFO_V1(get_protocol);
 Datum get_protocol(PG_FUNCTION_ARGS) 
@@ -457,10 +490,6 @@ Datum url_same_file(PG_FUNCTION_ARGS)
 {
 	char *url1_str = TextDatumGetCString(PG_GETARG_DATUM(0));
 	char *url2_str = TextDatumGetCString(PG_GETARG_DATUM(1));
-	URL *url1 = (URL *) malloc(sizeof(URL));
-	URL *url2 = (URL *) malloc(sizeof(URL));
-	parse_url(url1_str,url1);
-	parse_url(url2_str,url2);
 	PG_RETURN_BOOL(strcmp(url1->file, url2->file) == 0);
 }
 
