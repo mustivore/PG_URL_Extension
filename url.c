@@ -84,8 +84,10 @@ static void retrieve_userinfo(const char* url_str, URL *url)
 static void retrieve_host(const char* url_str, URL *url)
 {
 	char *e;
+	char *token;
 	char *url_to_stroke = malloc(sizeof(char)*(strlen(url_str)+1));
 	strcpy(url_to_stroke, url_str);
+	token = strtok(url_to_stroke, ":");
 	url->host = malloc(sizeof(char)*(strlen(url_str)+1));
 	e = strchr(url_to_stroke,'@');
 	if (e != NULL) {
@@ -330,7 +332,6 @@ Datum make_url_prot_host_port_file(PG_FUNCTION_ARGS)
 	is_valid_host(str_host);
 	port_url = PG_GETARG_INT32(2);
 	is_valid_port(port_url);
-	sprintf(port_char, "%d", port_url);
 	str_file = PG_GETARG_CSTRING(3);
 	is_valid_file(str_file);
 	strcat(final_url,str_prot);
