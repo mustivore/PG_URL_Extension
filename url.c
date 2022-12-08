@@ -11,6 +11,7 @@
 
 PG_MODULE_MAGIC;
 
+// the string url is parsed into this struct
 typedef struct _url {
    char *scheme;
    char *host;
@@ -24,8 +25,12 @@ typedef struct _url {
    int   port;
 }  URL;
 
+// used to store the URL into the DB
 typedef struct varlena url_db;
 
+/*
+	retrieve the protocol from the given url string and store it into the struct URL
+*/
 static void retrieve_protocol(const char* url_str, URL *url)
 {
 	char *token;
@@ -37,6 +42,9 @@ static void retrieve_protocol(const char* url_str, URL *url)
 	free(url_to_stroke);
 }
 
+/*
+	retrieve the authority from the given url string and store it into the struct URL
+*/
 static void retrieve_authority(const char* url_str, URL *url)
 {
 	char *token;
@@ -49,6 +57,9 @@ static void retrieve_authority(const char* url_str, URL *url)
 	free(url_to_stroke);
 }
 
+/*
+	retrieve the port from the given url string authority and store it into the struct URL
+*/
 static void retrieve_port_from_authority(const char* url_str, URL *url)
 {
 	char *e;
@@ -63,6 +74,9 @@ static void retrieve_port_from_authority(const char* url_str, URL *url)
 	}
 }
 
+/*
+	retrieve the user info from the given url string authority and store it into the struct URL
+*/
 static void retrieve_userinfo(const char* url_str, URL *url)
 {
 	char *token;
@@ -81,6 +95,9 @@ static void retrieve_userinfo(const char* url_str, URL *url)
 	free(url_to_stroke);
 }
 
+/*
+	retrieve the host from the given url string authorithy and store it into the struct URL
+*/
 static void retrieve_host(const char* url_str, URL *url)
 {
 	char *e;
@@ -97,6 +114,9 @@ static void retrieve_host(const char* url_str, URL *url)
 	free(url_to_stroke);
 }
 
+/*
+	retrieve the file from the given url string and store it into the struct URL
+*/
 static void retrieve_file(const char* url_str, URL *url)
 {
 	char *token;
@@ -112,6 +132,9 @@ static void retrieve_file(const char* url_str, URL *url)
 	free(url_to_stroke);
 }
 
+/*
+	retrieve the path from the given file part and store it into the struct URL
+*/
 static void retrieve_path_from_file(const char* url_str, URL *url)
 {
 	char *url_to_stroke = malloc(sizeof(char)*(strlen(url_str)+1));
@@ -128,6 +151,9 @@ static void retrieve_path_from_file(const char* url_str, URL *url)
 	free(url_to_stroke);
 }
 
+/*
+	retrieve the query part from the given file part and store it into the struct URL
+*/
 static void retrieve_query_from_file(const char* url_str, URL *url)
 {
 	char *e;
@@ -142,7 +168,9 @@ static void retrieve_query_from_file(const char* url_str, URL *url)
 	
 }
 
-
+/*
+	retrieve the ref from the given url string and store it into the struct URL
+*/
 static void retrieve_ref(const char* url_str, URL *url)
 {
 	char *fragment_part = strchr(url_str,'#');
@@ -156,6 +184,10 @@ static void retrieve_ref(const char* url_str, URL *url)
 
 }
 
+/*
+	Retrieve the protocol, ref, authority, port, userinfo, host, file, path and query
+	from url in string and store these infos in the struct URL.
+*/
 static void parse_url(char* url_str, URL *url)
 {
 	retrieve_protocol(url_str,url);
@@ -171,6 +203,24 @@ static void parse_url(char* url_str, URL *url)
 	retrieve_query_from_file(url->file,url);
 }
 
+/*
+	Returns the default port according to the protocol
+	http => 80
+	https => 443
+*/
+static int get_default_port_from_url(URL* url) 
+{
+	if(strcmp(url->protocol,"https") == 0){
+		return 443;
+	} else {
+		return 80;
+	}
+}
+
+/*
+	Test if the provided URL is valid via a REGEX
+	If the URL is not valid, an error is displayed
+*/
 static bool is_valid_url(const char* url_str, bool return_statement){
 	regex_t regex;
 	int value_comp;
@@ -190,12 +240,21 @@ static bool is_valid_url(const char* url_str, bool return_statement){
 	return true;
 }
 
+/*
+	Test if the provided port number is valid
+	Check that the port number is not a negative number or bigger than 65353
+	If the port number is not valid, an error is displayed
+*/
 static void is_valid_port(const int port){
   if ( 0 > port || port > 65353){
     elog(ERROR, "Please provide a valid port");
   }
 }
 
+/*
+	Test if the provided host is valid via a REGEX
+	If the host is not valid, an error is displayed
+*/
 static void is_valid_host(const char* host){
   regex_t regex;
   int value_comp;
@@ -209,6 +268,11 @@ static void is_valid_host(const char* host){
     elog(ERROR, "Please provide a valid host");
   }
 }
+
+/*
+	Test if the provided file is valid via a REGEX
+	If the file is not valid, an error is displayed
+*/
 static void is_valid_file (const char* filename){
   regex_t regex;
   int value_comp;
@@ -222,13 +286,24 @@ static void is_valid_file (const char* filename){
     elog(ERROR, "Please provide a valid file");
   }
 }
+
+/*
+	Test if the provided protocol is valid (if it's equal to http or https)
+	If the protocol is not valid, an error is displayed
+*/
 static void is_valid_protocol (const char* protocol){
   if (!(strcmp(protocol, "http") == 0 || strcmp(protocol, "https") == 0)){
     elog(ERROR, "Please provide a valid protocol");
  	} 
 }
 
-
+/*
+	Compares two URLs 
+	Compares the two urls depending their protocol, authority and file parts
+	Returns a negative if url1 is smaller than url2
+	Returns 0 if url1 = url2
+	return a positive number > 0 if url1 > url2
+*/
 static int _url_cmp(URL *url1, URL *url2){
 	int diff;
 	diff = strcmp(url1->protocol, url2->protocol);
@@ -287,10 +362,9 @@ Datum make_url_prot_host_port_file(PG_FUNCTION_ARGS)
 	char* str_host;
 	char*str_file;
 	url_db *var_url_db;
-	char final_url[512]="";
+	char* final_url;
 	str_prot = PG_GETARG_CSTRING(0);
 	is_valid_protocol(str_prot);
-	//is_valid_url(str_url);
 	str_host =  PG_GETARG_CSTRING(1);
 	is_valid_host(str_host);
 	port_url = PG_GETARG_INT32(2);
@@ -298,14 +372,18 @@ Datum make_url_prot_host_port_file(PG_FUNCTION_ARGS)
 	sprintf(port_char, "%d", port_url);
 	str_file = PG_GETARG_CSTRING(3);
 	is_valid_file(str_file);
-	strcat(final_url,str_prot);
+	final_url = malloc(sizeof(char)*(strlen(str_prot) + strlen(str_host) +strlen(str_file)+strlen(port_char) + 6));
+	strcpy(final_url,str_prot);
 	strcat(final_url, "://");
 	strcat(final_url, str_host);
 	strcat(final_url, ":");
 	strcat(final_url, port_char);
-	strcat(final_url, "/");
+	if(strncmp("/", str_file,1) != 0){
+		strcat(final_url, "/");
+	}
 	strcat(final_url, str_file);
 	var_url_db = (url_db *) cstring_to_text(final_url);
+	free(final_url);
 	PG_RETURN_POINTER(var_url_db);
 }
 
@@ -316,19 +394,23 @@ Datum make_url_prot_host_file(PG_FUNCTION_ARGS)
 	char* str_host;
 	char*str_file;
 	url_db *var_url_db;
-	char final_url[512]="";
+	char* final_url;
 	str_prot = PG_GETARG_CSTRING(0);
 	is_valid_protocol(str_prot);
 	str_host =  PG_GETARG_CSTRING(1);
 	is_valid_host(str_host);
 	str_file = PG_GETARG_CSTRING(2);
 	is_valid_file(str_file);
-	strcat(final_url,str_prot);
+	final_url = malloc(sizeof(char)*(strlen(str_prot) + strlen(str_host) +strlen(str_file) + 3 + 2));
+	strcpy(final_url,str_prot);
 	strcat(final_url, "://");
 	strcat(final_url, str_host);
-	strcat(final_url, "/");
+	if(strncmp("/", str_file,1) != 0){
+		strcat(final_url, "/");
+	}
 	strcat(final_url, str_file);
 	var_url_db = (url_db *) cstring_to_text(final_url);
+	free(final_url);
 	PG_RETURN_POINTER(var_url_db);
 }
 
@@ -337,14 +419,16 @@ Datum make_url_cont_spec(PG_FUNCTION_ARGS) {
 	char* context = PG_GETARG_CSTRING(0);
 	char* spec = PG_GETARG_CSTRING(1);
 	url_db *var_url_db;
-	char final_url[512]="";
+	char* final_url;
 	if (is_valid_url(spec, true)) { //1. check whether spec is a complete URL
-		 strcat(final_url, spec);//only keep spec
+		 final_url = malloc(sizeof(char)*(strlen(spec)+1));
+		 strcpy(final_url, spec);//only keep spec
 	} else { //keep context
 		URL *url = (URL *) malloc(sizeof(URL)); 
 		is_valid_url(context, false);
 		parse_url(context, url);
-		strcat(final_url,url->protocol);
+		final_url = malloc(sizeof(char)*(strlen(url->protocol)+3+strlen(url->host)+strlen(url->path)+strlen(spec)+1+1));
+		strcpy(final_url,url->protocol);
 		strcat(final_url, "://");
 	 	strcat(final_url, url->host);
 		if (spec[0]=='/') { //spec is an absolute path
@@ -357,8 +441,9 @@ Datum make_url_cont_spec(PG_FUNCTION_ARGS) {
 		}
 	}
 	var_url_db = (url_db *) cstring_to_text(final_url);
+	free(final_url);
 	PG_RETURN_POINTER(var_url_db);
-	}
+}
 
 PG_FUNCTION_INFO_V1(get_protocol);
 Datum get_protocol(PG_FUNCTION_ARGS) 
@@ -370,24 +455,14 @@ Datum get_protocol(PG_FUNCTION_ARGS)
 	PG_RETURN_CSTRING(cstring_to_text(url->protocol));
 }
 
-static int get_default_port_from_str(char* url_str) 
-{
-	URL *url = (URL *) malloc(sizeof(URL));
-	parse_url(url_str, url);
-	if(strcmp(url->protocol,"https") == 0){
-		return 443;
-	} else {
-		return 80;
-	}
-	free(url);
-}
-
 PG_FUNCTION_INFO_V1(get_default_port);
 Datum get_default_port(PG_FUNCTION_ARGS) 
 {
 	Datum url_db = PG_GETARG_DATUM(0);
 	char *url_str = TextDatumGetCString(url_db);
-	PG_RETURN_INT32(get_default_port_from_str(url_str));
+	URL *url = (URL *) malloc(sizeof(URL));
+	parse_url(url_str, url);
+	PG_RETURN_INT32(get_default_port_from_url(url));
 }
 
 PG_FUNCTION_INFO_V1(get_authority);

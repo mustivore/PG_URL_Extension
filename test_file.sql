@@ -26,7 +26,6 @@ INSERT INTO test_url(id, link) VALUES (15, 'https://www.ulb.ac.be');
 INSERT INTO test_url(id, link) VALUES (16, 'https://www.google.com/search?q=postgresql&oq=postgresql&aqs=chrome..69i57j69i59l3j69i60j69i61j69i60l2.5881j0j1&sourceid=chrome&ie=UTF-8');
 INSERT INTO test_url(id, link) VALUES (17, 'https://john.doe@www.example.com:123/forum/questions/?tag=networking&order=newest#top');
 INSERT INTO test_url(id, link) VALUES (18, 'https://user:password@www.example.com:42/forum/questions/?tag=networking&order=newest#top');
-
 INSERT INTO test_url(id, link) VALUES (19, 
 					make_url_prot_host_port_file(
 						get_protocol('https://user:password@www.example.com:42/forum/questions/?tag=networking&order=newest#top')::cstring,
@@ -35,6 +34,8 @@ INSERT INTO test_url(id, link) VALUES (19,
 						443,
 						get_file('https://user:password@www.example.com:42/forum/questions/?tag=networking&order=newest#top')::cstring));
 
+INSERT INTO test_url(id, link) VALUES (20, make_url_prot_host_file('https', 'www.ulb.be', 'index.html' ));
+INSERT INTO test_url(id, link) VALUES (21, make_url_prot_host_file('https', 'www.ulb.be', '/index.html' ));
 
 SELECT * from test_url;
 
