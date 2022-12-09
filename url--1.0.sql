@@ -1,17 +1,16 @@
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION url" to load this file. \quit
-
+-- Authors:
+--Ayadi Mustapha 000545704
+--Soumaya Izmar 000546128
+--Guillaume Wafflard 000479740
+--Diaz Y Suarez Esteban 000476205
 CREATE TYPE url;
 
 CREATE OR REPLACE FUNCTION url_in(cstring)
 RETURNS url
 AS '$libdir/url'
 LANGUAGE C IMMUTABLE STRICT;
-
--- CREATE OR REPLACE FUNCTION create_url(cstring, cstring, cstring)
--- RETURNS url
--- AS '$libdir/url'
--- LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION url_out(url)
 RETURNS cstring
@@ -33,16 +32,16 @@ CREATE OR REPLACE FUNCTION make_url_prot_host_port_file(cstring, cstring ,intege
     AS '$libdir/url';
     
 CREATE OR REPLACE FUNCTION make_url_prot_host_file(cstring, cstring, cstring) RETURNS url
-        IMMUTABLE
-        STRICT
-        LANGUAGE C
-        AS '$libdir/url';
+    IMMUTABLE
+    STRICT
+    LANGUAGE C
+    AS '$libdir/url';
 
 CREATE OR REPLACE FUNCTION make_url_cont_spec(cstring,cstring) RETURNS url
-        IMMUTABLE
-        STRICT
-        LANGUAGE C
-        AS '$libdir/url';
+    IMMUTABLE
+    STRICT
+    LANGUAGE C
+    AS '$libdir/url';
 
 CREATE OR REPLACE FUNCTION get_protocol(url) RETURNS text
     IMMUTABLE
@@ -229,6 +228,9 @@ CREATE FUNCTION url_same_file(url, url) RETURNS boolean
     LANGUAGE C
     AS '$libdir/url';
 
+
+-- 'http://0' is the smallest URL that we can build. we trigger always triggered because $1 and $2 (url1 & url2)
+--  is always bigger or equals than 'http://0' 
 CREATE FUNCTION sameFile(url, url)
   RETURNS boolean
   AS 'SELECT $1 OPERATOR(>=) url_in(''http://0'') AND $2 OPERATOR(>=) url_in(''http://0'') AND url_same_file($1,$2)'

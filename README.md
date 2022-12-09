@@ -1,4 +1,10 @@
 # PostgreSQL Extension for URL
+This extension is made by: 
+    Ayadi Mustapha 000545704
+    Soumaya Izmar 000546128
+    Guillaume Wafflard 000479740
+    Diaz Y Suarez Esteban 000476205
+
 
 This extension implement the Java Class URL into PostgreSQL. 
 See doc : [https://docs.oracle.com/javase/8/docs/api/java/net/URL.html#URL-java.net.URL-java.lang.String]

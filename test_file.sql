@@ -1,3 +1,9 @@
+-- Authors:
+--Ayadi Mustapha 000545704
+--Soumaya Izmar 000546128
+--Guillaume Wafflard 000479740
+--Diaz Y Suarez Esteban 000476205
+
 DROP TABLE IF EXISTS test_url; --reset table
 
 DROP EXTENSION IF EXISTS url; --update extension in case of changes
@@ -30,30 +36,31 @@ INSERT INTO test_url(id, link) VALUES (19,
 					make_url_prot_host_port_file(
 						get_protocol('https://user:password@www.example.com:42/forum/questions/?tag=networking&order=newest#top')::cstring,
 						get_host('https://user:password@www.example.com:42/forum/questions/?tag=networking&order=newest#top')::cstring,
-						--get_port('https://user:password@www.example.com:42/forum/questions/?tag=networking&order=newest#top'),
 						443,
 						get_file('https://user:password@www.example.com:42/forum/questions/?tag=networking&order=newest#top')::cstring));
 
 INSERT INTO test_url(id, link) VALUES (20, make_url_prot_host_file('https', 'www.ulb.be', 'index.html' ));
 INSERT INTO test_url(id, link) VALUES (21, make_url_prot_host_file('https', 'www.ulb.be', '/index.html' ));
+INSERT INTO test_url(id, link) VALUES (22,'http://localhost:8080');
+INSERT INTO test_url(id, link) VALUES (23,'www.google.com'); --should not work bc no protocol provided
 
 SELECT * from test_url;
 
 SELECT 	id, 
-		--get_protocol(link), 
-		--get_authority(link), 
+		get_protocol(link), 
+		get_authority(link), 
 		get_host(link), 
-		--get_port(link), 
-		--get_default_port(link),
+		get_port(link), 
+		get_default_port(link),
 		get_file(link), 
 		get_path(link), 
 		get_query(link),
-		--get_ref(link), 
+		get_ref(link), 
 		get_user_info(link) 
 FROM test_url 
 WHERE 
 		get_query(link) IS NOT NULL
-		--equals(link, 'https://www.google.com:443')
-		--same_file(link, 'https://cs.ulb.ac.be/public/teaching/infoh415#project')
-		--same_host(link, 'https://www.google.com')
 ;
+
+DROP TABLE IF EXISTS test_url; --reset table
+DROP EXTENSION IF EXISTS url;

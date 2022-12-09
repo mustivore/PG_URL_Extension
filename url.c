@@ -5,6 +5,12 @@
 #include <string.h>
 #include <regex.h>
 
+// Authors:
+// Ayadi Mustapha 000545704
+// Soumaya Izmar 000546128
+// Guillaume Wafflard 000479740
+// Diaz Y Suarez Esteban 000476205
+
 #define REGEX_URL "((http|https)://)(www.)?[a-zA-Z0-9@:%._\\+~#?&//=]{1,256}(\\.[a-z]{2,6}\\b)?([-a-zA-Z0-9@:%._\\+~#?&//=]*)"
 #define REGEX_HOST "(www.)?[a-zA-Z0-9@:%._\\+~#?&//=]{1,256}(\\.[a-z]{2,6}\\b)?"
 #define REGEX_FILENAME "([-a-zA-Z0-9@:%._\\+~#?&//=]*)"
@@ -345,6 +351,8 @@ Datum get_file(PG_FUNCTION_ARGS);
 Datum get_path(PG_FUNCTION_ARGS);
 Datum get_query(PG_FUNCTION_ARGS);
 Datum get_ref(PG_FUNCTION_ARGS);
+Datum get_user_info(PG_FUNCTION_ARGS);
+Datum get_port(PG_FUNCTION_ARGS);
 /*
 	Compares the hosts of two URLs.
 */
