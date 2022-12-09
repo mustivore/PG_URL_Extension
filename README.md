@@ -5,6 +5,7 @@ This extension is made by:
 ###### Guillaume Wafflard 000479740
 ###### Diaz Y Suarez Esteban 000476205
 
+Please check the doc we have done (in ```url.c``` and ```url--1.0.sql``` ) because we have made some assumptions and we give also some explinations. 
 
 This extension implement the Java Class URL into PostgreSQL. 
 See doc : [https://docs.oracle.com/javase/8/docs/api/java/net/URL.html#URL-java.net.URL-java.lang.String]
