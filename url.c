@@ -298,7 +298,7 @@ static void is_valid_protocol (const char* protocol){
 }
 
 /*
-	Compares two URLs 
+	Compares two URLs excluding the fragment component
 	Compares the two urls depending their protocol, authority and file parts
 	Returns a negative if url1 is smaller than url2
 	Returns 0 if url1 = url2
@@ -317,10 +317,25 @@ static int _url_cmp(URL *url1, URL *url2){
 	return diff;
 }
 
+/*
+	Creates a URL object from the String representation.
+*/
 Datum url_in(PG_FUNCTION_ARGS);
+/*
+	Creates a URL by parsing the given spec within a specified context.
+*/
 Datum make_url_cont_spec(PG_FUNCTION_ARGS);
+/*
+	Creates a URL from the specified protocol name, host name, and file name.
+*/
 Datum make_url_prot_host_file(PG_FUNCTION_ARGS);
+/*
+	Creates a URL object from the specified protocol, host, port number, and file.
+*/
 Datum make_url_prot_host_port_file(PG_FUNCTION_ARGS);
+/*
+	Constructs a string representation of this URL.
+*/
 Datum url_out(PG_FUNCTION_ARGS);
 Datum get_protocol(PG_FUNCTION_ARGS);
 Datum get_default_port(PG_FUNCTION_ARGS);
@@ -330,7 +345,13 @@ Datum get_file(PG_FUNCTION_ARGS);
 Datum get_path(PG_FUNCTION_ARGS);
 Datum get_query(PG_FUNCTION_ARGS);
 Datum get_ref(PG_FUNCTION_ARGS);
+/*
+	Compares the hosts of two URLs.
+*/
 Datum url_same_host(PG_FUNCTION_ARGS);
+/*
+	Compares two URLs, excluding the fragment component
+*/
 Datum url_same_file(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(url_in);
